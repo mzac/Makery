@@ -1,0 +1,51 @@
+# Cut a GitHub Release when a version tag is pushed.
+#
+#   git tag v1.0.0 && git push origin v1.0.0
+#
+# The image for the same tag is built and pushed by docker.yml, which runs on
+# the same event.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # v1.2.3 -> 1.2.3, which is the image tag metadata-action writes.
+      # A hyphen in the tag (v1.0.0-rc1) means a prerelease.
+      - name: Read the tag
+        id: tag
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#v}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          if [[ "$tag" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create the release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          prerelease: ${{ steps.tag.outputs.prerelease == 'true' }}
+          body: |
+            Image: `ghcr.io/mzac/makery:${{ steps.tag.outputs.version }}`
+
+            ```bash
+            docker pull ghcr.io/mzac/makery:${{ steps.tag.outputs.version }}
+            ```

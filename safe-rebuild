@@ -5,12 +5,17 @@
 # file regardless, so nothing is lost, but the progress bar vanishes from under
 # whoever was watching it and the sidecar with the prompt is never written.
 # I did that to three real renders before writing this.
+#
+# ComfyUI's address is asked of the running app (the parent page's value, then
+# .env, then the built-in default), so this works on any install. If the app is
+# not running there is nothing to protect, and the count reads 0.
 set -e
 cd "$(dirname "$0")"
 while :; do
-  busy=$(docker exec makery python -c "
+  busy=$(docker compose exec -T makery python -c "
 import json, urllib.request
-q = json.load(urllib.request.urlopen('http://comfyui-comfyui:8188/queue'))
+from app import gallery, config
+q = json.load(urllib.request.urlopen(config.value('comfy_url') + '/queue', timeout=5))
 print(len(q.get('queue_running') or []) + len(q.get('queue_pending') or []))" 2>/dev/null || echo 0)
   [ "$busy" = "0" ] && break
   echo "waiting: $busy job(s) on the GPU..."

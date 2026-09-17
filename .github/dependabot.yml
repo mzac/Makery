@@ -1,0 +1,12 @@
+# Keep the action versions in .github/workflows/ current. Nothing else:
+# pip and the base image are pinned deliberately and are updated by hand.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    labels:
+      - dependencies
