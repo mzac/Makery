@@ -170,6 +170,14 @@ git clone https://github.com/mzac/Makery.git && cd Makery
 cp .env.example .env
 ```
 
+Running the published image instead? Then all you need is a directory with a
+`.env` and a compose file in it, so take the example on its own:
+
+```bash
+mkdir makery && cd makery
+curl -fsSL https://raw.githubusercontent.com/mzac/Makery/main/.env.example -o .env
+```
+
 Open `.env` and set these. Everything else has a working default.
 
 ```ini
@@ -206,23 +214,104 @@ the first start, and then owned by the parent page. See
 
 ### 5. Start it
 
+Two ways to run it: the image that is published for you, or a build from this
+repository. The published image is the shorter road, and it is the one to take
+unless you are changing the code.
+
+**The published image.** Save this as `docker-compose.yml` beside the `.env`
+from step 4. Nothing else from the repository is needed:
+
+```yaml
+services:
+  makery:
+    image: ghcr.io/mzac/makery:latest
+    container_name: ${CONTAINER_NAME:-makery}
+    restart: unless-stopped
+
+    # Not for rendering, which ComfyUI does: NVML needs the driver libraries
+    # in the container to read GPU % and VRAM for the progress bar. Drop this
+    # line if the host has no NVIDIA GPU. The figures go missing from the page
+    # and everything else works.
+    gpus: all
+
+    ports:
+      - "${HOST_PORT:-8095}:8000"
+
+    # Has to be able to delete from GALLERY_DIR, which ComfyUI owns. See
+    # "File ownership" below before changing it.
+    user: "${RUN_AS:-1000:1000}"
+
+    volumes:
+      # ComfyUI's output directory, read directly as the gallery.
+      - ${GALLERY_DIR:?set GALLERY_DIR in .env}:/gallery
+      # ComfyUI's input directory, so leftover frames can be swept.
+      - ${COMFY_INPUT_DIR_HOST:-/dev/null}:/comfy-input
+      # Settings, profiles, characters, the transcript, the nightly backups.
+      - ${STATE_VOLUME:-makery-state}:/state
+
+    # `required: false` so compose still parses before you have written one.
+    env_file:
+      - path: .env
+        required: false
+
+    environment:
+      # Paths inside the container. The host side of all three is in .env.
+      GALLERY_DIR: /gallery
+      COMFY_INPUT_DIR: /comfy-input
+      STATE_DIR: /state
+
+    networks:
+      - shared
+
+volumes:
+  # Only created when STATE_VOLUME is left at its default.
+  makery-state:
+
+networks:
+  shared:
+    # The network ComfyUI and Ollama are already on. This file joins it, it
+    # does not own it. `docker network ls` to find the name.
+    external: true
+    name: ${NETWORK_NAME:?set NETWORK_NAME in .env}
+```
+
+Then:
+
+```bash
+docker compose pull
+docker compose up -d
+docker compose logs makery | grep -iE "model|warn"
+```
+
+**Pin a version once there is one to pin.** `latest` moves with every push to
+`main`, so a pull on a Tuesday morning can hand a child a different app from
+the one they used on Monday. Each release publishes a `1.2.3`, a `1.2` and a
+`1` tag, and every build also gets a `sha-<short>` one. Putting a release
+number in place of `latest` means an update happens when you choose it rather
+than when somebody else pushes. Check the
+[releases page](https://github.com/mzac/Makery/releases) for the newest.
+
+**The package is private until somebody makes it public.** GitHub publishes a
+new package privately, so until its visibility is changed an anonymous
+`docker pull ghcr.io/mzac/makery:latest` fails with `401 Unauthorized`. If the
+repository is yours, change it on GitHub under the package's own settings
+(Packages, then makery, then Package settings, then Change visibility). Until
+then, sign in with a personal access token carrying the `read:packages` scope:
+
+```bash
+echo <token> | docker login ghcr.io -u <github-username> --password-stdin
+```
+
+**Building it yourself** needs the whole repository, whose `docker-compose.yml`
+already says `build: .` where the snippet above says `image:`:
+
 ```bash
 docker compose up -d --build
 docker compose logs makery | grep -iE "model|warn"
 ```
 
-The second line shows the startup check. Nothing about models means every file
-was found.
-
-**Prefer a prebuilt image?** Every push to `main` and every release is
-published to GitHub Container Registry. In `docker-compose.yml`, replace
-`build: .` with:
-
-```yaml
-    image: ghcr.io/mzac/makery:latest     # or a release, e.g. :1.0.0
-```
-
-Then `docker compose pull && docker compose up -d` instead of `--build`.
+The last line is the startup check either way. Nothing about models means every
+file in step 1 was found.
 
 ### 6. First visit
 
@@ -382,18 +471,30 @@ uvicorn app.main:app --port 8000
 
 ## Updating
 
+Building from source:
+
 ```bash
 git pull
 ./safe-rebuild
 ```
 
-If you use the prebuilt image, `docker compose pull && docker compose up -d`
-does the same job.
+Running the published image:
 
-`docker compose up -d --build` also works, but rebuilding mid-render loses
-the progress bar and the notes for the file being made. `safe-rebuild` waits
-for ComfyUI's queue to empty first, then rebuilds and recovers any notes that
-were lost.
+```bash
+docker compose pull
+docker compose up -d
+```
+
+`docker compose up -d --build` also works, but rebuilding or restarting
+mid-render loses the progress bar and the notes for the file being made.
+`safe-rebuild` waits for ComfyUI's queue to empty first, then rebuilds and
+recovers any notes that were lost.
+
+`safe-rebuild` ends in `docker compose up -d --build`, which builds a local
+image and never asks the registry for a newer one. On the published-image
+route, run `docker compose pull` first and then `./safe-rebuild` if you have
+the script, or watch the parent page until nothing is rendering and then
+`docker compose up -d`.
 
 ## Troubleshooting
 
