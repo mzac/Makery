@@ -1,0 +1,1137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Parent page</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css?v=2026-09-17n">
+<style>
+  /* Plain and dense on purpose: this is for you, not for the child. */
+  body { font-size: 16px; }
+  main.parent { max-width: 900px; gap: 16px; }
+  .parent h1 { margin: 0; font-size: 26px; }
+  .parent .card { padding: 16px 18px; border-color: var(--card-edge); }
+  .parent h2 { font-size: 19px; margin: 0 0 10px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+  .tile-stat { padding: 12px; border-radius: 12px; background: var(--field); border: 1px solid var(--card-edge); }
+  .tile-stat b { display: block; font-size: 26px; }
+  .tile-stat span { font-size: 13px; color: var(--ink-dim); }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  /* A <select> is as wide as its longest option, and "close if the picture
+     checker says no to an uploaded photo" is wider than a phone. Without this
+     the Rules tab was the one tab that scrolled sideways. */
+  .row > label, .row select { max-width: 100%; min-width: 0; }
+  .parent label { font-size: 15px; }
+  .parent input[type="time"] { min-height: 40px; padding: 0 10px; font: inherit; color: var(--ink); background: var(--field); border: 1px solid var(--card-edge); border-radius: 10px; }
+  .parent code { background: var(--field); padding: 1px 5px; border-radius: 5px; }
+  .parent input[type="number"] { width: 90px; min-height: 40px; padding: 0 10px; font: inherit; color: var(--ink); background: var(--field); border: 1px solid var(--card-edge); border-radius: 10px; }
+  /* Text boxes: an address, a relay, the helper's name. Same treatment as
+     the number and time boxes, but sized by their container rather than by a
+     fixed width - what goes in them is a sentence, not a figure. */
+  .parent input[type="text"] { min-height: 40px; padding: 0 10px; font: inherit;
+    color: var(--ink); background: var(--field); border: 1px solid var(--card-edge);
+    border-radius: 10px; min-width: 0; max-width: 100%; }
+  .parent h4 { margin: 18px 0 2px; font-size: 15px; }
+  /* A block of labelled boxes - the email server, the helper tuning. The
+     label sits *above* its box: side by side, "Blank uses the app's title"
+     does not leave a box wide enough to type an address into at 390px. One
+     column on a phone, as many as fit anywhere else. */
+  .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 10px; margin-top: 10px; }
+  .fields label { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .fields label > span { color: var(--ink-dim); font-size: 13px; }
+  .fields input, .fields select { width: 100%; }
+  .fields .wide { grid-column: 1 / -1; }
+  /* A tick sits on one line with its words, unlike the boxes around it. */
+  .fields .toggle { flex-direction: row; align-items: center; align-self: end;
+    min-height: 40px; }
+  .fields .toggle input { width: 22px; flex: none; }
+  .parent button { min-height: 40px; padding: 0 14px; border-radius: 10px; font-size: 15px; font-weight: 700; color: var(--ink); background: var(--field); border: 1px solid var(--card-edge); }
+  .parent button.primary { color: #21104a; background: var(--good); border-color: var(--good); }
+  .parent button.danger { color: #fff; background: #c03b5a; border-color: #c03b5a; }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; }
+  .toggle input { width: 22px; height: 22px; }
+  .refused-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 8px; }
+  .refused-item { padding: 8px; border-radius: 12px; background: var(--field); border: 1px solid var(--card-edge); }
+  .refused-item img, .refused-item video {
+    width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
+    border-radius: 8px; display: block; background: #000;
+  }
+  .refused-item small { display: block; margin: 6px 0; color: var(--ink-dim); }
+  .refused-item .row { margin-top: 4px; gap: 6px; }
+  .refused-item button { flex: 1 1 auto; min-height: 34px; font-size: 13px; padding: 0 8px; }
+  .muted { color: var(--ink-dim); font-size: 14px; }
+  .parent select { min-height: 40px; padding: 0 8px; font: inherit; color: var(--ink); background: var(--field); border: 1px solid var(--card-edge); border-radius: 10px; }
+  .parent a.button { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 10px; font-size: 15px; font-weight: 700; text-decoration: none; color: var(--ink); background: var(--field); border: 1px solid var(--card-edge); }
+  .parent a.button.primary { color: #21104a; background: var(--good); border-color: var(--good); }
+  .parent a.button[aria-disabled="true"] { opacity: 0.45; pointer-events: none; }
+  .parent details summary { cursor: pointer; padding: 4px 0; }
+  .parent details[open] summary { margin-bottom: 8px; }
+  /* The one line that answers "is it working?" without a number in sight. */
+  .verdict { margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .verdict::before { content: ""; width: 14px; height: 14px; border-radius: 50%; background: var(--ink-dim); flex: none; }
+  .verdict.good::before { background: var(--good); }
+  .verdict.warn::before { background: var(--warn); }
+  .verdict.bad::before { background: #ff6b6b; }
+  .spacebar { display: flex; height: 16px; border-radius: 999px; overflow: hidden; background: var(--field); border: 1px solid var(--card-edge); }
+  .spacebar .seg { display: block; height: 100%; }
+  .spacebar .vid { background: var(--accent-i2v); }
+  .spacebar .pic { background: var(--accent-image); }
+  .spacebar .bin { background: var(--card-edge); }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: baseline; margin-right: 4px; }
+  #today-strip { margin-top: 14px; }
+  .ok { color: var(--good); } .bad { color: var(--bad); }
+  /* The log. One entry per row, dense, and wrapping rather than scrolling
+     sideways - a details blob can be long and a phone is 390px wide. */
+  .log-row { margin-top: 6px; padding: 8px 10px; font-size: 14px; border-radius: 10px;
+    background: var(--field); border: 1px solid var(--card-edge); overflow-wrap: anywhere; }
+  .log-row .when { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+  .log-row .who { font-weight: 700; }
+  .log-row .bits { display: block; color: var(--ink-dim); font-size: 13px; }
+  .log-row .seal { display: block; color: var(--ink-dim); font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .parent input[type="date"] { min-height: 40px; padding: 0 10px; font: inherit; color: var(--ink); background: var(--field); border: 1px solid var(--card-edge); border-radius: 10px; }
+  #pin { max-width: 380px; margin: 60px auto; }
+  #pin input { width: 100%; min-height: 48px; font: inherit; font-size: 22px; letter-spacing: 6px; text-align: center; color: var(--ink); background: var(--field); border: 1px solid var(--card-edge); border-radius: 12px; }
+  .saved { font-size: 14px; color: var(--good); }
+  a.back { color: var(--accent-t2v); font-size: 14px; }
+  .refused-item img, .refused-item video { cursor: zoom-in; }
+  #lightbox { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 20px; background: rgba(0,0,0,0.92); cursor: zoom-out; }
+  #lightbox img, #lightbox video { max-width: 100%; max-height: 85vh; border-radius: 10px; background: #000; }
+  /* A song: the waveform above, the player under it, both full width. */
+  #lightbox audio { width: min(92vw, 640px); min-height: 44px; }
+  /* The chat transcript. Scrolls inside its own box rather than making the
+     page ten screens long. */
+  .modules { display: grid; gap: 8px; margin: 8px 0 12px; }
+  .module { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px;
+    padding: 10px 12px; background: var(--field); border: 1px solid var(--card-edge);
+    border-radius: 10px; }
+  .module .toggle { font-weight: 700; }
+  .module .what { flex: 1 1 260px; min-width: 0; color: var(--ink-dim); font-size: 13px; }
+  .module.cannot { opacity: 0.65; }
+  .module .cannot-why { color: var(--warn); font-size: 13px; }
+
+  /* One row per job a language model does here. Laid out like .module above,
+     because it is the same shape of thing: a name, a control, and a line
+     saying what it decides. */
+  .helpers { display: grid; gap: 10px; margin: 10px 0 4px; }
+  .helper { padding: 10px 12px; background: var(--field); border: 1px solid var(--card-edge); border-radius: 10px; }
+  .helper .top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .helper .name { font-weight: 800; flex: 0 0 auto; }
+  .helper select { flex: 1 1 220px; min-width: 0; max-width: 100%; }
+  .helper .what { color: var(--ink-dim); font-size: 13px; margin: 6px 0 0; }
+  .helper .note { font-size: 13px; margin: 6px 0 0; }
+  .helper .note.warn { color: var(--warn); }
+  .helper .note.bad { color: var(--bad); }
+  .helper .tried { font-size: 13px; color: var(--ink-dim); margin: 6px 0 0; word-wrap: break-word; }
+  .helper .tried b { color: var(--ink); }
+
+  .routes { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+  .routes li { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; padding: 8px 10px; background: var(--field); border: 1px solid var(--card-edge); border-radius: 10px; font-size: 14px; }
+  .routes .where { font-weight: 800; color: var(--ink); }
+  .routes .gets { color: var(--ink-dim); }
+  .routes-eg { margin: 6px 0; padding: 10px 12px; background: var(--field); border: 1px solid var(--card-edge); border-radius: 10px; font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; overflow-wrap: break-word; }
+  /* The live graph. Drawn on a canvas rather than built out of elements: it
+     redraws once a second and a hundred and eighty <div>s per line would be
+     the most expensive thing on the page. */
+  #machine-graph { display: block; width: 100%; height: 160px; margin-top: 6px;
+    background: var(--field); border: 1px solid var(--card-edge); border-radius: 12px; }
+  .gauges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .gauge { flex: 1 1 130px; padding: 8px 10px; background: var(--field);
+    border: 1px solid var(--card-edge); border-radius: 10px; }
+  .gauge .what { display: flex; align-items: center; gap: 6px; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-dim); }
+  .gauge .key { width: 10px; height: 10px; border-radius: 3px; }
+  .gauge .value { font-size: 20px; font-weight: 800; }
+  .gauge .sub { font-size: 12px; color: var(--ink-dim); }
+
+  /* A song's words in the picture modal, as they were written. */
+  .lyric-sheet { margin: 6px 0 0; padding: 10px 12px; font: inherit; font-size: 14px;
+    line-height: 1.5; white-space: pre-wrap; overflow-wrap: break-word; max-height: 40vh;
+    overflow-y: auto; color: var(--ink); background: var(--field);
+    border: 1px solid var(--card-edge); border-radius: 10px; }
+
+  .chat-scroll { max-height: 420px; overflow-y: auto; padding: 10px 12px; margin-top: 8px; background: var(--field); border: 1px solid var(--card-edge); border-radius: 12px; }
+  .chat-line { display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 15px; }
+  .chat-line:last-child { border-bottom: 0; }
+  .chat-line time { flex: 0 0 92px; color: var(--ink-dim); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .chat-line .who { flex: 0 0 64px; font-weight: 700; }
+  .chat-line .said { flex: 1 1 auto; white-space: pre-wrap; word-wrap: break-word; }
+  .chat-line.kid .who, .chat-line.her .who { color: #b39cff; }
+  .chat-line.helper .who { color: var(--accent-t2v); }
+  .chat-line.flagged { background: rgba(255, 143, 143, 0.10); }
+  .chat-line.flagged .said::after { content: " [stopped: " attr(data-flag) "]"; color: var(--bad); font-size: 13px; }
+  .card h3 { margin: 0 0 8px; font-size: 18px; }
+  /* Eight tabs with labels of very different lengths. `flex: 1 1 0` gave them
+     all the same width, so the longest were cut down to "Righ..." and "Wha..."
+     while "Log" sat in a box twice the size it needed. Each one takes the room
+     its own words need and the row wraps when they stop fitting - a tab nobody
+     can read is worse than a second row. */
+  .ptabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+  .ptab-btn { flex: 0 1 auto; min-width: 0; min-height: 48px; padding: 6px 12px; font: inherit; font-size: 15px; font-weight: 800;
+    color: var(--ink-dim); background: var(--card); border: 2px solid var(--card-edge); border-radius: 14px; cursor: pointer;
+    line-height: 1.2; text-align: center; }
+  .ptab-btn.is-on { color: #21104a; background: var(--accent-t2v); border-color: var(--accent-t2v); }
+  .ptab > .card + .card { margin-top: 14px; }
+  /* The model instructions. Collapsed by default - twenty of them open at
+     once is a wall - with the safety-carrying ones marked. */
+  .pr { border: 1px solid var(--card-edge); border-radius: 12px; margin-top: 10px; background: var(--field); }
+  /* `.parent details summary` above is (0,1,2) and would win over a bare
+     `.pr > summary`, which is how these rows lost their padding and sat on
+     their own left border. The extra class puts them back in front. */
+  .parent .pr > summary { padding: 12px 14px; cursor: pointer; list-style: none; font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .parent .pr > summary::-webkit-details-marker { display: none; }
+  .parent .pr > summary::after { content: "▸"; color: var(--ink-dim); }
+  .parent .pr[open] > summary::after { content: "▾"; }
+  .pr .tag { font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .pr .tag.safety { background: rgba(255,209,102,0.18); color: var(--warn); }
+  .pr .tag.changed { background: rgba(86,227,159,0.18); color: var(--good); }
+  /* Pushed to the right so the name and its SAFETY pill read as one thing and
+     the provenance sits out of the way beside the arrow. */
+  .pr .tag.where { background: transparent; color: var(--ink-dim); font-weight: 600; text-transform: none; letter-spacing: 0; margin-left: auto; }
+  .pr .body { padding: 0 14px 14px; }
+  .pr .blurb { color: var(--ink-dim); font-size: 14px; margin: 0 0 10px; }
+  .pr .note { color: var(--warn); font-size: 13px; margin: 0 0 10px; padding: 8px 10px; background: rgba(255,209,102,0.08); border-radius: 8px; }
+  /* Sized to its content when the row opens - see fitPrompt() in parent.js.
+     These are 400 to 3300 characters and the point of the page is reading
+     them; a fixed window showing half of one and a scrollbar was worse than
+     useless. Capped so the longest does not swallow the screen. */
+  .pr textarea { width: 100%; min-height: 120px; max-height: 70vh; padding: 12px 14px; font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink); background: var(--card); border: 1px solid var(--card-edge); border-radius: 10px; resize: vertical; white-space: pre-wrap; overflow-wrap: break-word; }
+  .pr .blurb { font-size: 15px; }
+  .pr .row { margin-top: 10px; }
+  /* One row per day: the name and its tick on the left at a fixed width so
+     the time boxes line up down the week, which is what makes a timetable
+     readable at a glance rather than seven sentences to parse. */
+  /* Whose rules the cards below are about. A bar rather than a dropdown: with
+     two or three children the whole answer fits on one line, and a tap on a
+     face is quicker than opening a list to find it. */
+  .whose { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 18px 2px 8px; }
+  .whose-label { font-weight: 800; font-size: 15px; }
+  .whose-picks { display: flex; flex-wrap: wrap; gap: 8px; }
+  .whose-pick {
+    display: inline-flex; align-items: center; gap: 8px;
+    min-height: 44px; padding: 4px 14px 4px 5px;
+    font: inherit; font-size: 15px; font-weight: 700;
+    color: #e9e4ff; background: #221645; border: 2px solid #3a2d68;
+    border-radius: 999px; cursor: pointer;
+  }
+  .whose-pick.is-on { color: #21104a; background: var(--accent-t2v); border-color: var(--accent-t2v); }
+  .whose-face {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; font-size: 18px; line-height: 1;
+    border-radius: 50%; overflow: hidden; flex: none; background: #f7b32b;
+  }
+  .whose-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .whose-note { margin-top: 0 !important; }
+  .people { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+  .person { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .person input[type=text] { flex: 1 1 140px; min-width: 0; min-height: 40px; }
+  .person .adopts { font-size: 13px; color: #9a92c0; }
+  .hours { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+  .day-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .day-row > .toggle { flex: none; width: 128px; }
+  .day-row.is-off .windows { opacity: .45; }
+  .windows { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .win { display: inline-flex; align-items: center; gap: 4px; }
+  .win input[type=time] { font: inherit; min-height: 36px; padding: 2px 6px; }
+  .win .drop, .add-window { min-height: 36px; padding: 0 10px; font: inherit; font-size: 13px; }
+  .day-row .shut { color: #7a7a8c; font-size: 14px; }
+  @media (max-width: 520px) {
+    .ptab-btn { flex: 1 1 45%; font-size: 14px; }
+    .day-row > .toggle { width: 100%; }
+  }
+  /* How files are named: one row per kind, with what that pattern would call
+     the next file right underneath it. The row wraps rather than shrinking,
+     so a pattern is still readable on a phone. */
+  .names { display: grid; gap: 8px; margin: 10px 0 0; }
+  .name-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+    padding: 10px 12px; background: var(--field); border: 1px solid var(--card-edge); border-radius: 10px; }
+  .name-row .label { flex: 0 0 150px; font-weight: 700; font-size: 15px; }
+  .name-row input[type=text] { flex: 1 1 220px; min-width: 0; min-height: 40px; padding: 0 10px;
+    font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink);
+    background: var(--card); border: 1px solid var(--card-edge); border-radius: 10px; }
+  .name-row .what { flex: 1 1 100%; color: var(--ink-dim); font-size: 13px; }
+  .name-row .eg { flex: 1 1 100%; font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--good); overflow-wrap: anywhere; }
+  .name-row .eg.bad { color: var(--bad); }
+  .name-tokens { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .name-tokens li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px;
+    padding: 6px 10px; background: var(--card); border: 1px solid var(--card-edge);
+    border-radius: 8px; font-size: 14px; }
+  .name-tokens code { font-weight: 800; }
+  .small { font-size: 13px; }
+  /* Today's pictures: just pictures. What was asked for is behind a tap. */
+  .thumb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; margin: 6px 0 12px; }
+  .thumb { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 10px; background: #000; border: 1px solid var(--card-edge); cursor: zoom-in; padding: 0; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb .mark { position: absolute; top: 4px; left: 4px; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,0.6); font-size: 12px; }
+  .thumb .whose-mark { left: auto; right: 4px; top: auto; bottom: 4px; }
+  .thumb .star { left: auto; right: 4px; }
+  /* The modal carries the words now. */
+  #lightbox .lb-inner { max-width: min(92vw, 900px); max-height: 92vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  #lightbox img, #lightbox video { max-width: 100%; max-height: 62vh; }
+  .lb-info { width: 100%; padding: 12px 14px; background: var(--card); border: 1px solid var(--card-edge); border-radius: 12px; font-size: 15px; text-align: left; }
+  .lb-info b { display: block; margin-bottom: 4px; }
+  .lb-info .prompt { color: var(--ink-dim); font-size: 13px; margin-top: 6px; white-space: pre-wrap; }
+  .lb-info .row { margin-top: 10px; }
+</style>
+</head>
+<body>
+<main class="parent">
+  <div class="row" style="justify-content:space-between">
+    <h1>Parent page</h1>
+    <a class="back" href="./">← back to the factory</a>
+  </div>
+
+  <section class="card" id="pin" hidden>
+    <h2>PIN</h2>
+    <input id="pin-input" type="password" inputmode="numeric" autocomplete="off" placeholder="••••">
+    <div class="row"><button class="primary" id="pin-go">Open</button><span class="bad" id="pin-bad" hidden>That's not it.</span></div>
+  </section>
+
+  <div id="body" hidden>
+    <!-- Eight groups, in the order a parent asks the questions: what is going
+         on right now, who is using it, what the rules are, what has been said
+         and what has been made, then the log, the household-level knobs, and
+         what it tells the AI. Every id is unchanged, so the script did not
+         have to move with the furniture. -->
+    <!-- Tabs, like the main page: one group on screen at a time. -->
+    <nav class="ptabs" role="tablist" aria-label="Sections">
+      <button type="button" class="ptab-btn is-on" data-tab="now" role="tab" aria-selected="true">🟢 Right now</button>
+      <button type="button" class="ptab-btn" data-tab="people" role="tab" aria-selected="false">👥 Who uses it</button>
+      <button type="button" class="ptab-btn" data-tab="rules" role="tab" aria-selected="false">📏 Rules</button>
+      <button type="button" class="ptab-btn" data-tab="eye" role="tab" aria-selected="false">✉️ Alerts</button>
+      <button type="button" class="ptab-btn" data-tab="stuff" role="tab" aria-selected="false">🗂️ Their stuff</button>
+      <button type="button" class="ptab-btn" data-tab="log" role="tab" aria-selected="false">📜 Log</button>
+      <button type="button" class="ptab-btn" data-tab="settings" role="tab" aria-selected="false">⚙️ Settings</button>
+      <button type="button" class="ptab-btn" data-tab="words" role="tab" aria-selected="false">📝 What it tells the AI</button>
+    </nav>
+
+    <div class="ptab" data-tab="now">
+    <section class="card">
+      <p id="verdict" class="verdict"></p>
+      <div class="tiles" id="today"></div>
+      <p class="muted" id="totals"></p>
+      <p class="muted small">Tap a picture to see what was asked for.</p>
+      <div class="thumb-grid" id="today-strip"></div>
+      <details><summary class="muted">Under the bonnet</summary>
+        <div id="system" class="muted"></div>
+      </details>
+    </section>
+    <section class="card" id="machine-card">
+      <h3>The machine</h3>
+      <p class="muted">The last three minutes. It updates while you are looking
+        at this tab and stops when you are not.</p>
+      <canvas id="machine-graph" height="160" aria-label="Live processor, memory and graphics card use"></canvas>
+      <div class="gauges" id="machine-now"></div>
+    </section>
+    <section class="card">
+      <h3>Space</h3>
+      <div class="spacebar"><span class="seg vid"></span><span class="seg pic"></span><span class="seg bin"></span></div>
+      <p class="muted" id="space-legend"></p>
+      <div class="row">
+        <label>Tidy up anything older than
+          <select id="older">
+            <option value="90">3 months</option>
+            <option value="180" selected>6 months</option>
+            <option value="365">a year</option>
+          </select>
+        </label>
+        <label class="toggle"><input type="checkbox" id="keep-favs" checked> keep favourites</label>
+        <button id="tidy">Have a look</button>
+        <span class="muted" id="tidy-result"></span>
+      </div>
+    </section>
+
+    </div>
+
+    <div class="ptab" data-tab="people" hidden>
+    <section class="card" id="people-card">
+      <h3>Who uses this</h3>
+      <p class="muted">One installation, one address, and a set of rules each.
+        With only one person here nobody ever sees a sign-in screen; add a
+        second and the app asks who is making things when it opens.</p>
+      <div class="people" id="people"></div>
+      <div class="row">
+        <input id="new-name" type="text" maxlength="24" placeholder="Their name">
+        <label>age <input type="number" id="new-age" min="0" max="19" step="1" style="width:64px"></label>
+        <button class="primary" id="add-person">Add somebody</button>
+        <span class="bad" id="people-bad" hidden></span>
+      </div>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="shared"> Everybody sees everybody's pictures</label>
+      </div>
+      <p class="muted small">Off, each child sees only their own and cannot
+        star, rename or trash anybody else's. It is a curtain rather than a
+        lock: a direct link to a file still opens, because this page shows
+        those pictures in plain image tags that cannot carry the PIN. For
+        siblings on a home network that is the right weight.</p>
+      <p class="muted small">Removing somebody deletes nothing. Their pictures
+        stay on disk, stay in the nightly email, and stay visible here.</p>
+    </section>
+
+    </div>
+
+    <div class="ptab" data-tab="rules" hidden>
+    <section class="card">
+      <h3>Open or closed</h3>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="paused"> Close the factory (the sign says "back soon")</label>
+      </div>
+      <p class="muted bad" id="closed-why" hidden></p>
+    </section>
+    <section class="card">
+      <h3>If the filter says no</h3>
+      <p class="muted">
+        Anything the word filter stops, or a photo the picture checker says no
+        to, is refused and your child is shown a friendly message. This is what happens
+        <em>next</em>. You are told either way &mdash; with the picture attached,
+        if there was one.
+      </p>
+      <div class="row">
+        <label>Then
+          <select id="close-on"></select>
+        </label>
+      </div>
+      <p class="muted small">The picture checker looked at an actual image and
+        said no, which is a much stronger signal than a word on a list &mdash;
+        the word filter also stops &ldquo;gun&rdquo; in a sentence about a water
+        pistol. That is why the middle setting is the one worth having on.</p>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="screen-uploads"> Show every photo your child uploads to the picture checker first</label>
+      </div>
+      <p class="muted small">Off means a photo or a drawing goes straight into
+        their gallery. On, it is looked at first &mdash; and it still goes in if
+        the checker cannot be reached, because it is their own camera roll.</p>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="chat-strict"> Check the chat against the whole picture word list</label>
+        <label class="toggle"><input type="checkbox" id="music-strict"> &hellip;and song words too</label>
+      </div>
+      <p class="muted small">Both off by default. That list is written for
+        pictures, so it stops words a conversation or a song needs &mdash;
+        &ldquo;blood&rdquo;, &ldquo;gun&rdquo;, &ldquo;hanging&rdquo; from a
+        tree. A shorter list runs either way.</p>
+      <div class="row">
+        <button class="primary" id="filter-save">Save</button>
+        <span class="saved" id="filter-saved" hidden>Saved</span>
+      </div>
+    </section>
+
+    <div class="whose" id="whose-bar" hidden>
+      <span class="whose-label">Whose rules?</span>
+      <div class="whose-picks" id="whose-picks"></div>
+    </div>
+    <p class="muted small whose-note" id="whose-note" hidden></p>
+    <section class="card">
+      <h3>When it is open</h3>
+      <p class="muted">A timetable, so it does not need closing and opening by
+        hand twice a day. Outside these times your child sees a friendly sign that
+        says <em>when</em> it opens again &mdash; not just &ldquo;back
+        soon&rdquo;. Anything already rendering is left to finish.</p>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="hours-on"> Use a timetable</label>
+        <span class="muted" id="hours-now"></span>
+      </div>
+      <div class="hours" id="hours"></div>
+      <div class="row">
+        <button class="primary" id="hours-save">Save</button>
+        <span class="saved" id="hours-saved" hidden>Saved</span>
+        <button id="hours-copy">Copy Monday to Tue&ndash;Fri</button>
+        <button id="hours-anyway" hidden></button>
+      </div>
+      <p class="muted small">The switch above still wins: closing the factory
+        by hand keeps it closed whatever the timetable says. &ldquo;Let them in
+        anyway&rdquo; is the other direction &mdash; it ignores the timetable
+        until midnight tonight and then forgets it, so there is nothing to put
+        back. <b>/open</b> on Telegram does the same thing.</p>
+    </section>
+    <section class="card">
+      <h3>What they can make</h3>
+      <p class="muted">Turning one off takes its tab away and makes the app
+        refuse it, not just hide it &mdash; so reloading past it does nothing.
+        Everything already made stays in their gallery either way.</p>
+      <div class="modules" id="modules"></div>
+      <div class="row">
+        <button class="primary" id="modules-save">Save</button>
+        <span class="saved" id="modules-saved" hidden>Saved</span>
+      </div>
+    </section>
+    <section class="card">
+      <h3>Sums first</h3>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="quiz-on"> Sums before they can start, once a day</label>
+        <label>how many <input type="number" id="quiz-count" min="1" max="10" step="1" style="width:64px"></label>
+        <label>how hard
+          <select id="quiz-level">
+            <option value="easy">Easy — single digits, nothing below zero</option>
+            <option value="medium">Medium — hundreds, tables, exact division</option>
+            <option value="hard">Harder — bigger numbers, some two-step sums</option>
+          </select>
+        </label>
+      </div>
+      <div class="row" id="quiz-ops">
+        <label class="toggle"><input type="checkbox" data-op="add"> adding</label>
+        <label class="toggle"><input type="checkbox" data-op="sub"> taking away</label>
+        <label class="toggle"><input type="checkbox" data-op="mul"> times</label>
+        <label class="toggle"><input type="checkbox" data-op="div"> sharing out</label>
+        <span class="muted" id="quiz-ops-msg" hidden>Leave at least one kind ticked.</span>
+      </div>
+      <div class="row">
+        <button id="quiz-skip" hidden>Skip them today</button>
+        <button id="quiz-reset" hidden>Ask for them again</button>
+        <span class="muted" id="quiz-state"></span>
+      </div>
+      <div class="row">
+        <label>&ldquo;I'm a grown-up&rdquo; on their screen lasts
+          <input type="number" id="quiz-bypass" min="1" max="1440" step="5" style="width:80px"> minutes</label>
+      </div>
+      <p class="muted small">Typing the PIN on the sums overlay gets past them
+        for that long, on that browser, without using up their one go.</p>
+    </section>
+    <section class="card">
+      <h3>How many a day</h3>
+      <p class="muted"><b>0 means no limit.</b> With a limit set your child sees a countdown and the button
+        stops working when they run out. It resets at midnight, and deleting something does not give one back.</p>
+      <div class="row">
+        <label>Pictures a day <input type="number" id="image-limit" min="0" max="500" step="1"></label>
+        <label>Videos a day <input type="number" id="limit" min="0" max="500" step="1"></label>
+        <label id="music-limit-row">Songs a day <input type="number" id="music-limit" min="0" max="500" step="1"></label>
+        <button class="primary" id="save">Save</button>
+        <span class="saved" id="saved" hidden>Saved</span>
+      </div>
+      <div id="left-today" class="muted"></div>
+      <div class="row" id="bonus-row" hidden>
+        <span class="muted">Just this once:</span>
+        <button data-bonus="image" data-extra="1">+1 picture today</button>
+        <button data-bonus="video" data-extra="1">+1 video today</button>
+        <button data-bonus="video" data-extra="5">+5 videos today</button>
+        <button data-bonus="music" data-extra="1" id="bonus-music">+1 song today</button>
+        <button id="clear-bonus" hidden>Take today's extras back</button>
+      </div>
+    </section>
+
+    </div>
+
+    <div class="ptab" data-tab="eye" hidden>
+    <section class="card">
+      <h3>Daily email</h3>
+      <p class="muted">One email a day with small pictures of everything your child made. Nothing is sent
+        on a day they made nothing.</p>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="digest-on"> Send the daily email</label>
+        <label>at <input type="time" id="digest-at"></label>
+      </div>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="limit-mail"> Email me the moment they run out for the day</label>
+        <label>at most <input type="number" id="digest-max" min="1" max="200" step="1" style="width:72px"> pictures in one email</label>
+        <button class="primary" id="digest-save">Save</button>
+        <span class="saved" id="digest-saved" hidden>Saved</span>
+      </div>
+      <div class="row">
+        <button id="digest-test">Send a report now</button>
+        <span class="muted" id="digest-result"></span>
+      </div>
+      <p class="muted small" id="digest-config"></p>
+
+      <h4>Email server</h4>
+      <p class="muted">Where it goes and what it goes through. This used to be in
+        <code>.env</code>; it is here now, and a change takes effect on the next email
+        with no rebuild.</p>
+      <div class="fields">
+        <label class="wide">Send it to
+          <input type="text" id="d-to" placeholder="you@example.com, someone@example.com">
+        </label>
+        <label>Mail server
+          <input type="text" id="d-host" placeholder="smtp.example.com">
+        </label>
+        <label>Port
+          <input type="number" id="d-port" min="1" max="65535" step="1">
+        </label>
+        <label class="toggle"><input type="checkbox" id="d-tls"> Use STARTTLS</label>
+        <label>Username <span>blank for a relay that needs none</span>
+          <input type="text" id="d-user" placeholder="">
+        </label>
+        <label>Password <span>whether one is set; it is never shown back</span>
+          <span id="d-pass-state" class="muted"></span>
+        </label>
+        <label>From address
+          <input type="text" id="d-from" placeholder="makery@localhost">
+        </label>
+        <label>From name <span>blank uses this app&rsquo;s title</span>
+          <input type="text" id="d-fromname" placeholder="">
+        </label>
+        <label class="wide">Subject line <span><code>{date}</code>, <code>{count}</code> and <code>{name}</code> are filled in</span>
+          <input type="text" id="d-subject" placeholder="">
+        </label>
+        <label class="wide">Subject for the &ldquo;run out for today&rdquo; email <span><code>{things}</code> is &ldquo;pictures&rdquo; or &ldquo;videos&rdquo;</span>
+          <input type="text" id="d-limitsubject" placeholder="">
+        </label>
+      </div>
+      <div class="row">
+        <button class="primary" id="server-save">Save</button>
+        <span class="saved" id="server-saved" hidden>Saved</span>
+        <button id="server-test">Send a test email</button>
+        <span class="muted" id="server-result"></span>
+      </div>
+      <h4>The relay password</h4>
+      <p class="muted">Kept apart from everything else on this page, and worth
+        saying why: the backup file holds every setting, and the backup is the
+        file you email to yourself &mdash; a relay password does not belong in
+        it. So this one is <b>left out of the backup</b>, never shown back to
+        this page once saved, and never written into a log line or the activity
+        log. <code>DIGEST_SMTP_PASS</code> in <code>.env</code> still works and
+        still applies until you set one here.</p>
+      <div class="secret" data-key="smtp_pass">
+        <p class="muted" data-state></p>
+        <div class="row">
+          <input type="password" autocomplete="new-password" data-input
+                 placeholder="the new password" style="flex:1;min-width:200px">
+          <button class="primary" data-save>Save it</button>
+          <button data-clear>Clear</button>
+          <span class="saved" data-saved hidden>Saved</span>
+          <span class="bad small" data-error></span>
+        </div>
+      </div>
+      <h4>Or one Apprise URL, used as it is</h4>
+      <p class="muted">For a relay the boxes above cannot describe &mdash; Gmail
+        with an app password, SendGrid, SES. Set one and it wins over every box
+        on this card. It is <b>only for this email</b>; messages to your phone
+        have their own box under &ldquo;Messages to your phone&rdquo;, and a URL
+        in one of them never does the other one&rsquo;s job.</p>
+      <p class="muted">The shape it exists for is
+        <code>mailtos://you:apppassword@gmail.com</code>, so it is a password
+        with a hostname in front of it &mdash; and it is treated like one:
+        <b>left out of the backup file</b>, never shown back to this page once
+        saved, never written into a log line. If you had one here before, it has
+        been moved out of the settings on its own and nothing needs doing.
+        <code>DIGEST_URL</code> in <code>.env</code> still works and still
+        applies until you set one here.</p>
+      <div class="secret" data-key="digest_url">
+        <p class="muted" data-state></p>
+        <div class="row">
+          <input type="password" autocomplete="off" data-input
+                 placeholder="mailtos://you:apppassword@gmail.com"
+                 style="flex:1;min-width:240px">
+          <button class="primary" data-save>Save it</button>
+          <button data-clear>Clear</button>
+          <span class="saved" data-saved hidden>Saved</span>
+          <span class="bad small" data-error></span>
+        </div>
+      </div>
+    </section>
+    <section class="card">
+      <h3>Messages to your phone</h3>
+      <p class="muted">
+        Telegram, WhatsApp, Signal, ntfy, Discord and about 150 others, through
+        <a href="https://github.com/caronc/apprise" target="_blank" rel="noopener">Apprise</a>.
+        One URL per service &mdash; for Telegram that is
+        <code>tgram://&lt;bot token&gt;/&lt;chat id&gt;</code>.
+      </p>
+      <p class="muted">These are Apprise URLs like the one on the Daily email
+        card, and they are not the same box: <b>these go to a phone</b>, that
+        one sends the nightly email. Put an <code>mailto</code> URL here and it
+        gets every alert you have ticked below, not the summary.</p>
+      <p class="muted" id="notify-state"></p>
+      <h4>Where they go</h4>
+      <p class="muted">These URLs have a token in each of them, so they are
+        treated like the relay password: <b>left out of the backup file</b>,
+        never shown back to this page, never written into a log line.
+        <code>NOTIFY_URLS</code> in <code>.env</code> still works and still
+        applies until you put some here. A change takes effect on the next
+        message &mdash; no restart.</p>
+      <div class="secret" data-key="notify_urls">
+        <p class="muted" data-state></p>
+        <div class="row">
+          <textarea data-input rows="2" style="flex:1;min-width:240px"
+                    placeholder="tgram://123456789:AA.../987654321"></textarea>
+          <button class="primary" data-save>Save them</button>
+          <button data-clear>Clear</button>
+          <span class="saved" data-saved hidden>Saved</span>
+          <span class="bad small" data-error></span>
+        </div>
+      </div>
+      <ul class="routes" id="notify-routes" hidden></ul>
+      <details class="muted">
+        <summary>Send different things to different places</summary>
+        <p>List as many as you like, and put in front of each one what it should get:
+          <code>made</code>, <code>limit</code>, <code>digest</code>, <code>flagged</code>,
+          and <code>file</code> to attach the picture or video itself. Name nothing and
+          that one gets everything.</p>
+        <pre class="routes-eg">made,file=tgram://&lt;bot token&gt;/&lt;chat id&gt;
+limit,flagged=ntfy://ntfy.sh/mytopic</pre>
+        <p>That is every picture, with the file, to Telegram, and only the two worth
+          interrupting you for to your phone. The switches below still decide whether
+          a thing is sent at all.</p>
+      </details>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="n-made"> Send me every picture and video as it is made</label>
+        <label class="toggle"><input type="checkbox" id="n-attach"> &hellip;with the file attached</label>
+      </div>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="n-limit"> When they run out for the day</label>
+        <label class="toggle"><input type="checkbox" id="n-digest"> The daily summary</label>
+        <label class="toggle"><input type="checkbox" id="n-flagged"> Anything the word filter stops</label>
+        <label class="toggle"><input type="checkbox" id="n-pin"> Someone getting this page's PIN wrong</label>
+      </div>
+      <p class="muted small">The PIN one goes to the email as well as the phone,
+        whichever of them is set up. At most one message every ten minutes, plus
+        the one that says the page has locked itself.</p>
+      <div class="row">
+        <label>Attach files up to
+          <input type="number" id="n-maxmb" min="0" max="2000" step="1" style="width:84px"> MB</label>
+        <span class="muted small">Anything bigger is mentioned instead. Telegram takes
+          50; most others take less.</span>
+      </div>
+      <div class="row">
+        <button class="primary" id="notify-save">Save</button>
+        <span class="saved" id="notify-saved" hidden>Saved</span>
+        <button id="notify-test">Send a test message</button>
+        <span class="muted" id="notify-result"></span>
+      </div>
+    </section>
+    <section class="card" id="ask-card" hidden>
+      <h3>Asking the bot things</h3>
+      <p class="muted">
+        The same Telegram bot can answer you back. Ask it
+        &ldquo;what have they been making?&rdquo; in your own words and it replies
+        from today's real numbers, or use a command:
+        <code>/today</code>, <code>/more 5</code>, <code>/pause</code>,
+        <code>/open</code>, <code>/last</code>, <code>/help</code>.
+      </p>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="n-ask"> Let me ask the bot questions</label>
+      </div>
+      <p class="muted" id="ask-state"></p>
+      <h4>The bot&rsquo;s own token</h4>
+      <p class="muted">From BotFather. Only needed if the bot is not already
+        one of the URLs above &mdash; the token inside a <code>tgram://</code>
+        URL is the same token and is used automatically. Kept out of the backup
+        file and out of the log like the other two, and
+        <code>TELEGRAM_BOT_TOKEN</code> in <code>.env</code> still applies
+        until you set one here. The bot starts listening within half a minute
+        of a token appearing; there is nothing to restart.</p>
+      <div class="secret" data-key="telegram_token">
+        <p class="muted" data-state></p>
+        <div class="row">
+          <input type="password" autocomplete="new-password" data-input
+                 placeholder="123456789:AA..." style="flex:1;min-width:200px">
+          <button class="primary" data-save>Save it</button>
+          <button data-clear>Clear</button>
+          <span class="saved" data-saved hidden>Saved</span>
+          <span class="bad small" data-error></span>
+        </div>
+      </div>
+      <div class="fields">
+        <label class="wide">Who may ask it <span>chat IDs or <code>@names</code>, separated by commas. Anyone else is ignored without a reply.</span>
+          <input type="text" id="t-chatids" placeholder="">
+        </label>
+        <label>Wait for an answer <span>seconds</span>
+          <input type="number" id="t-timeout" min="5" max="900" step="5">
+        </label>
+      </div>
+      <div class="row">
+        <button class="primary" id="ask-save">Save</button>
+        <span class="saved" id="ask-saved" hidden>Saved</span>
+      </div>
+      <p class="muted">
+        Leave the box empty and it uses the chat IDs already in the notify
+        URLs, which is where they have always come from. The model only
+        <em>reads</em>: it is given today's numbers and told to answer from those
+        alone. Anything that changes the app is a command you typed. Questions are
+        answered without the model while something is being made, so a question
+        never costs anybody a render.
+      </p>
+    </section>
+
+    </div>
+
+
+    <div class="ptab" data-tab="stuff" hidden>
+    <section class="card">
+      <h3>What was said in the chat <span class="muted" id="chat-count"></span></h3>
+      <p class="muted">Everything typed into the Chat tab, newest last. Your child is told their grown-ups can
+        read this. Anything the filter stopped is marked.</p>
+      <div class="chat-scroll" id="chat-transcript"></div>
+      <div class="row">
+        <button id="chat-refresh">Refresh</button>
+        <button id="chat-clear">Delete the transcript</button>
+        <span class="muted" id="chat-cleared"></span>
+      </div>
+    </section>
+    <section class="card">
+      <div class="row" style="justify-content:space-between">
+        <h3>Trash <span class="muted" id="trash-count"></span></h3>
+        <button class="danger" id="empty-trash" hidden>Empty the trash</button>
+      </div>
+      <p class="muted">Things your child deleted. They go for good on their own after
+        a while; put one back, or delete it now. A deleted thing still counts
+        against their day, on purpose &mdash; otherwise a limit just teaches them
+        to bin the ones they like least.</p>
+      <div class="refused-grid" id="trash"></div>
+    </section>
+    <section class="card">
+      <h3>Uploads the screen refused <span class="muted" id="refused-count"></span></h3>
+      <p class="muted">The picture checker said no to these. If it was wrong, "Allow" puts the picture into their gallery.</p>
+      <div class="refused-grid" id="refused"></div>
+    </section>
+    <section class="card">
+      <h3>Save it all</h3>
+      <p class="muted">A zip you can drop on the family computer. Big ones take a moment to build.</p>
+      <div class="row">
+        <a class="button primary" id="zip-today" download>Today</a>
+        <a class="button" id="zip-favs" download>Favourites</a>
+        <a class="button" id="zip-all" download>Everything</a>
+      </div>
+    </section>
+    </div>
+
+    <div class="ptab" data-tab="log" hidden>
+      <section class="card">
+        <h3>What has happened</h3>
+        <p class="muted">Everything the app does that is worth writing down:
+          what was made, what was deleted and put back, what the filter stopped,
+          every setting change with its old and new value, who signed in, and
+          wrong PINs.</p>
+        <p class="muted small"><strong>Nothing here deletes it.</strong> There
+          is no button on this page and no route in the app that shortens the
+          log. Each entry is sealed against the one before it, so an entry
+          edited or removed afterwards shows up below as a break at a named
+          position. To be plain about the limit: anybody with a shell on the
+          server can delete the database. The app will not, and the chain says
+          if somebody did.</p>
+        <div class="row">
+          <label>Day <input type="date" id="log-day"></label>
+          <label>Who
+            <select id="log-who"><option value="">everybody</option></select>
+          </label>
+          <label>What
+            <select id="log-kind"><option value="">everything</option></select>
+          </label>
+          <button id="log-clear">Show everything</button>
+        </div>
+        <div class="row">
+          <button id="log-check">Check the chain</button>
+          <span class="muted" id="log-verdict"></span>
+        </div>
+        <div class="row">
+          <button id="log-csv">Download as CSV</button>
+          <button id="log-jsonl">Download as JSONL</button>
+          <span class="muted small">The hashes come with it, so a copy kept
+            elsewhere can be checked against this one.</span>
+        </div>
+        <div id="log-rows"></div>
+        <div class="row" id="log-paging" hidden>
+          <button id="log-prev">← newer</button>
+          <span class="muted" id="log-where"></span>
+          <button id="log-next">older →</button>
+        </div>
+      </section>
+      <section class="card">
+        <h3>How long to keep it</h3>
+        <div class="row">
+          <label>Keep entries for
+            <select id="log-keep">
+              <option value="0">for ever</option>
+              <option value="30">30 days</option>
+              <option value="90">3 months</option>
+              <option value="365">a year</option>
+            </select>
+          </label>
+          <label class="toggle"><input type="checkbox" id="log-words"> Record the words a refusal stopped</label>
+          <span class="saved" id="log-saved" hidden>Saved</span>
+        </div>
+        <p class="muted small">For ever is the default. Trimming writes its own
+          entry saying it ran, so the gap it leaves at the front of the chain
+          has an explanation sealed at the back of it. The words switch is off
+          to begin with: which category stopped something answers "is the
+          filter working", and the sentence itself is the child's.</p>
+      </section>
+    </div>
+
+    <div class="ptab" data-tab="settings" hidden>
+    <section class="card" id="backup-card">
+      <h3>Backup and restore</h3>
+      <p class="muted">One file with <b>everything you have decided</b>: every
+        setting, for the household and for each child, who the children are and
+        what their faces look like, their characters, the words they have asked
+        for before, the chat, the prompt overrides, the render timings and their
+        banner. <b>Not their pictures, videos or songs</b> &mdash; those are the
+        gigabytes, and they are already files on a disk you can copy. This one
+        is a few hundred kilobytes and you can email it to yourself.</p>
+      <div class="row">
+        <button class="primary" id="backup-get">Download a backup</button>
+        <button id="backup-now">Keep one on the server</button>
+        <span class="muted" id="backup-result"></span>
+      </div>
+      <h4>Put one back</h4>
+      <p class="muted">Restoring <b>replaces</b> all of the above with what is
+        in the file. It does not touch the gallery, and it never renumbers a
+        child &mdash; their pictures stay theirs. A copy of what is here now is
+        saved first, so this can be undone.</p>
+      <div class="row">
+        <input type="file" id="restore-file" accept="application/json,.json">
+        <button class="danger" id="restore-go">Restore from this file</button>
+        <span class="muted" id="restore-result"></span>
+      </div>
+      <h4>Copies on the server <span class="muted" id="backups-count"></span></h4>
+      <p class="muted">One is made every night. Each kind is counted
+        separately &mdash; the nightly ones, the copies saved just before a
+        restore, and any you made by hand &mdash; so a run of nightly ones
+        cannot push out the copy taken five minutes before you restored
+        something.</p>
+      <div class="row">
+        <label>Keep the newest
+          <input type="number" id="backup-keep" min="1" max="365" step="1"
+                 style="width:76px"> of each kind</label>
+        <button class="primary" id="backup-keep-save">Save</button>
+        <span class="saved" id="backup-keep-saved" hidden>Saved</span>
+      </div>
+      <p class="muted small">Anything older than that is deleted the next time
+        one is made. Seven is a week, which is about how long it takes somebody
+        to notice that the parent page has gone funny.</p>
+      <div id="backups"></div>
+    </section>
+    <section class="card" id="pin-card">
+      <h3>The PIN on this page</h3>
+      <p class="muted" id="pin-state"></p>
+      <p class="muted">It gates this page, the &ldquo;I&rsquo;m a grown-up&rdquo;
+        box on the warm-up sums, and adding a profile. <b>Without one, anybody
+        who can reach the app is a grown-up here</b> &mdash; which is fine on a
+        home network and not otherwise.</p>
+      <div class="fields">
+        <label>The one you use now <span>typed again, not taken from this page</span>
+          <input type="password" id="pin-current" autocomplete="current-password">
+        </label>
+        <label>The new one <span>four characters or more</span>
+          <input type="password" id="pin-new" autocomplete="new-password">
+        </label>
+        <label>And again
+          <input type="password" id="pin-again" autocomplete="new-password">
+        </label>
+      </div>
+      <div class="row">
+        <button class="primary" id="pin-save">Change it</button>
+        <span class="saved" id="pin-saved" hidden>Changed</span>
+        <span class="bad small" id="pin-error"></span>
+      </div>
+      <p class="muted small">There is deliberately no button here that
+        <em>removes</em> the PIN: turning the lock off from behind it is how a
+        page like this is left open by accident. It is never shown back, never
+        logged, and never put in the backup file. To take it off &mdash; or if
+        it is forgotten &mdash; see &ldquo;Forgetting the PIN&rdquo; in the
+        README; it needs a shell on the machine, which is the point.</p>
+    </section>
+    <section class="card" id="deploy-card">
+      <h3>What it talks to, and how it keeps time</h3>
+      <p class="muted">The last four things that used to mean editing
+        <code>.env</code> and rebuilding. Whatever is set here wins; clear it
+        and the file applies again. Each says underneath where its current
+        value came from.</p>
+      <div id="deploy-rows"></div>
+    </section>
+    <section class="card" id="helpers-card">
+      <h3>The helpers</h3>
+      <p class="muted">Three jobs, and which model in Ollama does each one. The
+        list is what this machine has <em>already pulled</em> &mdash; this app
+        never downloads a model. To add one, run
+        <code>ollama pull &lt;name&gt;</code> where Ollama is (the names are in
+        <a href="https://ollama.com/library" target="_blank" rel="noopener">its
+        library</a>) and come back to this page.</p>
+      <p class="muted" id="helpers-state"></p>
+      <div class="helpers" id="helpers-roles"></div>
+      <div class="row">
+        <button class="primary" id="helpers-save">Save</button>
+        <span class="saved" id="helpers-saved" hidden>Saved</span>
+        <span class="muted" id="helpers-result"></span>
+      </div>
+      <p class="muted small">Ollama and the picture maker share one graphics
+        card, and a video render wants nearly all of it &mdash; so this and a
+        render never sit on it together: the helper is unloaded before every
+        render and loaded again when it is next asked something. A bigger model
+        is not a risk to a render, then. It is a longer wait before the answer
+        comes back, every time.</p>
+
+      <h4>How they are held</h4>
+      <p class="muted">How long Ollama keeps a model on the card after it has
+        answered. <code>0</code> lets go of it at once and pays the load time on
+        every tap; <code>60s</code> or <code>5m</code> trades memory back for
+        speed. On this machine the card is shared with the picture maker, so
+        <code>0</code> for the idea helper is the safe answer.</p>
+      <div class="fields">
+        <label>The idea helper, keep for
+          <input type="text" id="h-script-keep" placeholder="0">
+        </label>
+        <label>The Chat tab, keep for
+          <input type="text" id="h-chat-keep" placeholder="5m">
+        </label>
+        <label class="toggle"><input type="checkbox" id="h-free"> Empty the card before every render</label>
+        <label>Call the chat helper
+          <input type="text" id="h-chat-name" placeholder="Sparky">
+        </label>
+        <label>Chat messages kept <span>for you to read on Their stuff</span>
+          <input type="number" id="h-chat-keep-msgs" min="20" max="20000" step="20">
+        </label>
+      </div>
+      <div class="row">
+        <button class="primary" id="held-save">Save</button>
+        <span class="saved" id="held-saved" hidden>Saved</span>
+      </div>
+      <p class="muted small">The helper&rsquo;s name is a proper noun: it stays the
+        same in all seven languages, and it shows on the Chat tab and in the
+        line it opens with. Emptying the card before a render is what stops the
+        two model sets meeting on it &mdash; turn it off only on a bigger
+        card.</p>
+    </section>
+    <section class="card" id="naming-card">
+      <h3>How files are named</h3>
+      <p class="muted">What a new file is called, one pattern per kind of
+        thing. A pattern is plain letters, numbers, dots, dashes and
+        underscores, with <code>{tokens}</code> filled in as each file is made.
+        The line under each box is what the <em>next</em> one would be
+        called.</p>
+      <div class="names" id="naming-rows"></div>
+      <div class="row">
+        <button class="primary" id="naming-save">Save</button>
+        <button id="naming-defaults">Put the defaults back</button>
+        <span class="saved" id="naming-saved" hidden>Saved</span>
+        <span class="bad small" id="naming-error"></span>
+      </div>
+      <details class="pr">
+        <summary>What you can put in a pattern</summary>
+        <div class="body">
+          <ul class="name-tokens" id="naming-tokens"></ul>
+          <p class="muted small">Every pattern needs <code>{n}</code> or
+            <code>{time}</code> in it, or two files would want the same name.
+            <code>{n}</code> is counted here rather than by the picture maker,
+            which counts by looking at the folder and hands a number straight
+            back when something is deleted; this one only ever goes up.</p>
+        </div>
+      </details>
+      <p class="muted small"><b>Nothing already in the gallery is renamed.</b>
+        A pattern applies to what is made from now on. Renaming what is there
+        would break every thumbnail, every open tab and every note beside a
+        file, and nobody would see a thing for it.</p>
+    </section>
+    <section class="card">
+      <h3>How long things can be</h3>
+      <p class="muted">The two sliders on the child's page take their ends from here.
+        Songs are cheap. <b>Videos are not:</b> memory on the graphics card
+        goes with pixels times frames, and on this machine 15 seconds at the
+        normal quality peaks near 15.5&nbsp;GB of 16.3. Raising the video
+        ceiling is the one number on this page that can make a render
+        <em>fail</em> rather than just look different &mdash; move it a couple
+        of seconds at a time and watch the VRAM figure on &ldquo;Right
+        now&rdquo;.</p>
+      <div class="row">
+        <label>Videos, shortest <input type="number" id="vid-min" min="1" max="600" step="1" style="width:76px"></label>
+        <label>longest <input type="number" id="vid-max" min="1" max="600" step="1" style="width:76px"></label>
+        <label>starts at <input type="number" id="vid-def" min="1" max="600" step="1" style="width:76px"></label>
+        <label>longest on <em>sharper</em> <input type="number" id="vid-sharp" min="1" max="600" step="1" style="width:76px"></label>
+      </div>
+      <div class="row" id="music-length-row">
+        <label>Songs, shortest <input type="number" id="mus-min" min="1" max="600" step="1" style="width:76px"></label>
+        <label>longest <input type="number" id="mus-max" min="1" max="600" step="1" style="width:76px"></label>
+        <label>starts at <input type="number" id="mus-def" min="1" max="600" step="1" style="width:76px"></label>
+      </div>
+      <div class="row">
+        <button class="primary" id="lengths-save">Save</button>
+        <span class="saved" id="lengths-saved" hidden>Saved</span>
+      </div>
+      <p class="muted small">Seconds. <em>Sharper</em> is more pixels per
+        frame, so it runs out of card sooner and has its own ceiling.</p>
+    </section>
+    <section class="card">
+      <h3>Words and wording</h3>
+      <p class="muted">Three things about how it reads, not about what it does.</p>
+      <div class="fields">
+        <label class="wide">Call the whole thing <span>blank builds it from the child's name &mdash; and does it properly in each of the seven languages</span>
+          <input type="text" id="app-title" placeholder="">
+        </label>
+      </div>
+      <div class="row">
+        <label>Their page opens in
+          <select id="ui-lang">
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="es">Spanish</option>
+            <option value="it">Italian</option>
+            <option value="nl">Dutch</option>
+            <option value="pt">Portuguese</option>
+          </select>
+        </label>
+        <label>In emails and on this page, call your child
+          <select id="pronoun">
+            <option value="she">she / her</option>
+            <option value="he">he / him</option>
+            <option value="they">they / them</option>
+          </select>
+        </label>
+        <button class="primary" id="wording-save">Save</button>
+        <span class="saved" id="wording-saved" hidden>Saved</span>
+      </div>
+      <p class="muted small">The language here is only what a browser that has
+        never chosen opens in. Whoever is at the screen picks one of the seven
+        in their own Settings tab, that choice lives in a cookie, and it wins
+        from then on &mdash; so two children on one iPad can read different
+        languages. This page stays English either way.</p>
+    </section>
+    <section class="card">
+      <h3>Tidying up</h3>
+      <div class="row">
+        <label>Keep deleted things for
+          <input type="number" id="trash-days" min="0" max="3650" step="1" style="width:76px"> days</label>
+        <label>Keep their cast to
+          <input type="number" id="max-characters" min="1" max="100" step="1" style="width:76px"> characters</label>
+        <label>Sweep the frames left in the picture maker's inbox after
+          <input type="number" id="sweep-hours" min="0" max="8760" step="1" style="width:76px"> hours</label>
+        <button class="primary" id="stuff-save">Save</button>
+        <span class="saved" id="stuff-saved" hidden>Saved</span>
+      </div>
+      <p class="muted small">Every &ldquo;Animate this&rdquo; leaves a copy of
+        the picture where the picture maker can read it. Nobody ever sees those
+        and nothing else cleans them up; 0 hours leaves them alone.</p>
+    </section>
+    </div>
+
+    <div class="ptab" data-tab="words" hidden>
+      <section class="card">
+        <h3>What this app tells the models</h3>
+        <p class="muted">
+          Nineteen instructions decide almost everything: the tone of the idea
+          helpers, what the chat helper will and will not talk about, the rules
+          every comic panel is drawn by, and what the check on an uploaded photo
+          says no to. They are listed here so you can read them without opening
+          the source. <code>{age}</code> and <code>{age_old}</code> in one of
+          them are filled in from <code>KID_AGE</code> in <code>.env</code> —
+          keep them if you edit it.
+        </p>
+        <p class="muted" id="prompts-editable"></p>
+        <div class="row">
+          <label class="toggle"><input type="checkbox" id="prompt-editing"> Let me edit them here, not just read them</label>
+          <span class="saved" id="prompt-editing-saved" hidden>Saved</span>
+        </div>
+        <p class="muted small">Off by default, and worth leaving off unless you
+          mean it: these are the only thing between a child and whatever the
+          model feels like saying. Turning it on takes effect on the next
+          reload of this page.</p>
+        <div id="prompts"></div>
+      </section>
+    </div>
+  </div>
+</main>
+<div id="lightbox" hidden>
+  <div class="lb-inner">
+    <img alt="">
+    <video controls playsinline hidden></video>
+    <!-- A song plays under its waveform, which stays in the <img> above. -->
+    <audio controls preload="metadata" hidden></audio>
+    <div class="lb-info" id="lb-info" hidden></div>
+    <p class="muted small">tap outside to close</p>
+  </div>
+</div>
+<script src="parent.js?v=2026-09-17p"></script>
+</body>
+</html>

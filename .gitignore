@@ -1,0 +1,24 @@
+# Real credentials. `.env.example` is the one that belongs in git.
+.env
+
+# Copies of .env made before editing it - these hold real values.
+# This repo used to live inside a larger one whose .gitignore covered these;
+# it does not any more, so the rule has to be here.
+*.bak-*
+.env.*.bak
+
+# Throwaway harnesses, screenshots and scratch output
+.scratch/
+
+# Python
+**/__pycache__
+**/*.pyc
+.venv/
+venv/
+
+# Agent worktrees (Claude Code); each is a full checkout
+.claude/worktrees/
+
+# macOS junk from an SMB share
+**/._*
+**/.DS_Store

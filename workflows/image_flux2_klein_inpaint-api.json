@@ -1,0 +1,271 @@
+{
+  "_note": "Ours, not a ComfyUI export and not a template: nothing shipped inpaints with Flux 2. It is image_flux2_klein_edit-api.json with the sampling latent swapped for VAEEncodeForInpaint, fed the mask painted on the page (LoadImageMask, red channel, white means change) - so the noise mask confines the whole change to the brush strokes - while the ReferenceLatent pair still sees the clean picture so the model knows what the rest of it looks like. Every input name and default checked against GET /object_info. Verified by a real render on 2026-09-15: a mask over the robot's head plus 'The robot is wearing a red party hat with white spots' put exactly that on its head in 5s. Measured against the original: the painted box moved by 28 of 255 on average and everything outside it by 2.8, which is the VAE round trip the whole picture takes on the way out and is invisible - but it *is* a re-encode, not the original bytes, and saying otherwise would be a promise this cannot keep. The node map is in CLAUDE.md.",
+  "70": {
+    "inputs": {
+      "unet_name": "flux-2-klein-9b-fp8.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "71": {
+    "inputs": {
+      "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "72": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "76": {
+    "inputs": {
+      "image": "easy-iv-gen-edit.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "74": {
+    "inputs": {
+      "clip": [
+        "71",
+        0
+      ],
+      "text": "make it night-time"
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "82": {
+    "inputs": {
+      "conditioning": [
+        "74",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "ConditioningZeroOut"
+    }
+  },
+  "124": {
+    "inputs": {
+      "pixels": [
+        "76",
+        0
+      ],
+      "vae": [
+        "72",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "125": {
+    "inputs": {
+      "conditioning": [
+        "74",
+        0
+      ],
+      "latent": [
+        "124",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "123": {
+    "inputs": {
+      "conditioning": [
+        "82",
+        0
+      ],
+      "latent": [
+        "124",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "99": {
+    "inputs": {
+      "image": [
+        "76",
+        0
+      ]
+    },
+    "class_type": "GetImageSize",
+    "_meta": {
+      "title": "Get Image Size"
+    }
+  },
+  "62": {
+    "inputs": {
+      "steps": 4,
+      "width": [
+        "99",
+        0
+      ],
+      "height": [
+        "99",
+        1
+      ]
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "Flux2Scheduler"
+    }
+  },
+  "61": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "73": {
+    "inputs": {
+      "noise_seed": 0
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "63": {
+    "inputs": {
+      "model": [
+        "70",
+        0
+      ],
+      "positive": [
+        "125",
+        0
+      ],
+      "negative": [
+        "123",
+        0
+      ],
+      "cfg": 1
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFGGuider"
+    }
+  },
+  "64": {
+    "inputs": {
+      "noise": [
+        "73",
+        0
+      ],
+      "guider": [
+        "63",
+        0
+      ],
+      "sampler": [
+        "61",
+        0
+      ],
+      "sigmas": [
+        "62",
+        0
+      ],
+      "latent_image": [
+        "211",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "65": {
+    "inputs": {
+      "samples": [
+        "64",
+        0
+      ],
+      "vae": [
+        "72",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "images": [
+        "65",
+        0
+      ],
+      "filename_prefix": "makery/fixed"
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "210": {
+    "inputs": {
+      "image": "easy-iv-gen-inpaint-mask.png",
+      "channel": "red"
+    },
+    "class_type": "LoadImageMask",
+    "_meta": {
+      "title": "Load Image (as Mask)"
+    }
+  },
+  "211": {
+    "inputs": {
+      "pixels": [
+        "76",
+        0
+      ],
+      "vae": [
+        "72",
+        0
+      ],
+      "mask": [
+        "210",
+        0
+      ],
+      "grow_mask_by": 6
+    },
+    "class_type": "VAEEncodeForInpaint",
+    "_meta": {
+      "title": "VAE Encode (for Inpainting)"
+    }
+  }
+}

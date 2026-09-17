@@ -1,0 +1,51 @@
+{
+  "_note": "NOT a ComfyUI export, unlike everything else in this directory. Built by hand from GET /object_info on 2026-09-15 - exact input names, types and combo values as ComfyUI reported them - because there is no official template for frame interpolation that fits (the only one on this box is comfy-mtb's, which needs TensorFlow and cannot load here). Verified by a real render on 2026-09-15: a 5.04s 960x512 24fps clip came back as 241 frames at 48fps, 5.02s, with its AAC soundtrack intact, in 10.2s. The node map is in CLAUDE.md. See _load() for why a key starting with an underscore is not a node.",
+  "1": {
+    "inputs": {
+      "file": "easy-iv-gen-smooth.mp4"
+    },
+    "class_type": "LoadVideo",
+    "_meta": { "title": "Load Video" }
+  },
+  "2": {
+    "inputs": {
+      "video": ["1", 0]
+    },
+    "class_type": "GetVideoComponents",
+    "_meta": { "title": "Get Video Components" }
+  },
+  "3": {
+    "inputs": {
+      "ckpt_name": "rife49.pth",
+      "frames": ["2", 0],
+      "clear_cache_after_n_frames": 10,
+      "multiplier": 2,
+      "fast_mode": true,
+      "ensemble": true,
+      "scale_factor": 1.0,
+      "dtype": "float32",
+      "torch_compile": false,
+      "batch_size": 1
+    },
+    "class_type": "RIFE VFI",
+    "_meta": { "title": "RIFE VFI" }
+  },
+  "4": {
+    "inputs": {
+      "images": ["3", 0],
+      "fps": 48.0,
+      "audio": ["2", 1]
+    },
+    "class_type": "CreateVideo",
+    "_meta": { "title": "Create Video" }
+  },
+  "5": {
+    "inputs": {
+      "video": ["4", 0],
+      "filename_prefix": "makery/smooth",
+      "format": "mp4"
+    },
+    "class_type": "SaveVideo",
+    "_meta": { "title": "Save Video" }
+  }
+}

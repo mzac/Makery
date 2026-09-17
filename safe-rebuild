@@ -1,0 +1,24 @@
+#!/bin/sh
+# Rebuild only when the GPU is idle.
+#
+# Rebuilding mid-render kills the job the app is tracking. ComfyUI finishes the
+# file regardless, so nothing is lost, but the progress bar vanishes from under
+# whoever was watching it and the sidecar with the prompt is never written.
+# I did that to three real renders before writing this.
+set -e
+cd "$(dirname "$0")"
+while :; do
+  busy=$(docker exec makery python -c "
+import json, urllib.request
+q = json.load(urllib.request.urlopen('http://comfyui-comfyui:8188/queue'))
+print(len(q.get('queue_running') or []) + len(q.get('queue_pending') or []))" 2>/dev/null || echo 0)
+  [ "$busy" = "0" ] && break
+  echo "waiting: $busy job(s) on the GPU..."
+  sleep 10
+done
+docker compose up -d --build "$@"
+sleep 6
+docker compose exec -T makery python -c "
+from app import gallery
+n = gallery.recover_missing()
+print('recovered notes for', n, 'file(s)') if n else None" 2>/dev/null || true

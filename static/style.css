@@ -1,0 +1,3617 @@
+/* Target: iPad Safari, used by an 11-year-old.
+   Big type, big targets, nothing hover-only, nothing small. */
+
+/* The colours are theirs to choose - the Settings tab writes data-theme on
+   <html>. Everything below is written against these variables, so a theme is
+   this block again with different values and nothing else.
+
+   --on-accent is the dark ink that goes *on* a coloured button. It was
+   var(--on-accent) in thirty-four places, which is what made this a theme system
+   rather than a five-minute job: half of them would still have been purple.
+   --glow is the wash at the top of the page.
+
+   The ids here and the list in app/themes.py have to agree. */
+:root, :root[data-theme="midnight"] {
+  --bg: #1b1035;
+  --card: #2a1b52;
+  --card-edge: #4b3488;
+  --ink: #ffffff;
+  --ink-dim: #cbbcf0;
+  --field: #180d2e;
+  --glow: #35206b;
+  --on-accent: #21104a;
+  --accent-image: #ffb02e;
+  --accent-t2v: #4fd1ff;
+  --accent-i2v: #ff6fd8;
+  --accent-chat: #b39cff;
+  /* The music card had no colour of its own, so its choices lit up white.
+     Borrowed from the picture-to-video card rather than a seventh swatch per
+     theme: var() resolves per theme, so this follows whichever is active. */
+  --accent-music: var(--accent-i2v);
+  --good: #56e39f;
+  --bad: #ff8f8f;
+  --warn: #ffd166;
+  --radius: 22px;
+  --tap: 68px;
+}
+
+:root[data-theme="bubblegum"] {
+  --bg: #2b0f2a;
+  --card: #451a43;
+  --card-edge: #7d3576;
+  --ink: #ffffff;
+  --ink-dim: #f6c9ec;
+  --field: #230b22;
+  --glow: #58204f;
+  --on-accent: #3a0f34;
+  --accent-image: #ffd166;
+  --accent-t2v: #6be7ff;
+  --accent-i2v: #ff8ad4;
+  --accent-chat: #ffa8e0;
+  --good: #6ce8b0;
+  --bad: #ff9fb0;
+  --warn: #ffd166;
+}
+
+:root[data-theme="ocean"] {
+  --bg: #071e2e;
+  --card: #0e3350;
+  --card-edge: #1f5c88;
+  --ink: #ffffff;
+  --ink-dim: #a9d7f2;
+  --field: #051724;
+  --glow: #10425f;
+  --on-accent: #04263a;
+  --accent-image: #ffc857;
+  --accent-t2v: #4fd1ff;
+  --accent-i2v: #7af0d4;
+  --accent-chat: #8fd3ff;
+  --good: #5ce6b4;
+  --bad: #ff9c9c;
+  --warn: #ffd166;
+}
+
+:root[data-theme="forest"] {
+  --bg: #0b2015;
+  --card: #133c27;
+  --card-edge: #256a42;
+  --ink: #ffffff;
+  --ink-dim: #b9e9ca;
+  --field: #081a11;
+  --glow: #14492c;
+  --on-accent: #07281a;
+  --accent-image: #ffd166;
+  --accent-t2v: #7de08a;
+  --accent-i2v: #c3f26a;
+  --accent-chat: #9ae6b4;
+  --good: #6ee7a0;
+  --bad: #ffa0a0;
+  --warn: #ffd166;
+}
+
+:root[data-theme="sunset"] {
+  --bg: #2b1206;
+  --card: #4b2211;
+  --card-edge: #8d3f1d;
+  --ink: #ffffff;
+  --ink-dim: #ffd4b3;
+  --field: #230e05;
+  --glow: #5e2b11;
+  --on-accent: #3a1608;
+  --accent-image: #ffb02e;
+  --accent-t2v: #ff9a5e;
+  --accent-i2v: #ff6f91;
+  --accent-chat: #ffc27a;
+  --good: #7fe0a0;
+  --bad: #ff9c9c;
+  --warn: #ffd166;
+}
+
+/* The one light one. Kept last because it is the one most likely to be a
+   surprise on a tablet in a dark room, and it is one tap to leave. */
+:root[data-theme="daylight"] {
+  --bg: #f3f0fb;
+  --card: #ffffff;
+  --card-edge: #d6cdf0;
+  --ink: #22124c;
+  --ink-dim: #5d4d8c;
+  --field: #efeafb;
+  --glow: #e2dafa;
+  --on-accent: #22124c;
+  --accent-image: #f7a91b;
+  --accent-t2v: #37c1f0;
+  --accent-i2v: #ef6fb8;
+  --accent-chat: #9b7cff;
+  --good: #16a34a;
+  --bad: #d43b5a;
+  --warn: #b45309;
+}
+
+* { box-sizing: border-box; }
+
+/* [hidden] is only a default of display:none, so any rule that sets display
+   overrides it. That is what made the empty source thumbnail show up as a
+   broken image. Make the attribute win everywhere. */
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+html {
+  min-height: 100%;
+  background: var(--bg) radial-gradient(120% 90% at 50% 0%, var(--glow) 0%, var(--bg) 60%) no-repeat;
+}
+body {
+  margin: 0;
+  padding: 0 0 64px;
+  background: transparent;
+  color: var(--ink);
+  font: 500 20px/1.45 ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont,
+        "Segoe UI", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* "Making your video... 40%" under the banner, on every tab. The tab dot says
+   *something* is happening; this says what, and how far along. */
+.nowbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* 748, not 780: the same as .banner above and the cards below, which are
+     780 minus main's 16px of padding each side. At 780 this was the one strip
+     on the page that stuck out past everything else. */
+  max-width: 748px;
+  margin: 10px auto 0;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+}
+.nowbar-dot {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--good);
+  animation: voice-pulse 1.2s ease-in-out infinite;
+}
+.nowbar-text { flex: 1 1 auto; min-width: 0; }
+/* Most of the bar is one button, and it carries no background of its own: the
+   bar is already a card, and a second fill inside it would read as a box
+   printed on a box. The chevron is the whole of the "there is more behind
+   this" - a word there would be a fourth thing competing for one strip. */
+.nowbar-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.nowbar-more { flex: none; font-size: 24px; line-height: 1; color: var(--ink-dim); }
+.nowbar-main:focus-visible {
+  outline: 3px solid var(--good);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+/* The closing-soon strip borrows .nowbar and is not a button. */
+.nowbar.closing .nowbar-more { display: none; }
+.nowbar-go {
+  flex: none;
+  min-height: 38px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--on-accent);
+  background: var(--good);
+  border: none;
+  border-radius: 999px;
+  touch-action: manipulation;
+}
+.nowbar.idle .nowbar-dot { background: var(--card-edge); animation: none; }
+/* The same strip, in the colour of a thing that is about to stop. It borrows
+   .nowbar rather than repeating twenty lines of it - the layout is identical
+   and only the meaning differs. */
+.nowbar.closing { border-color: var(--warn, #f0a500); font-size: 15px; }
+
+/* --- what's happening, in full -------------------------------------------
+   The sheet the now-bar opens. The progress bar in it is the card's own .bar,
+   so the thing they tap and the thing they came from are the same bar at two
+   sizes rather than two drawings of one idea. */
+.nowsheet { padding-bottom: calc(env(safe-area-inset-bottom) + 28px); }
+.now-making { margin: 18px 2px 0; font-size: 23px; font-weight: 800; }
+.now-idea { margin: 8px 2px 0; font-size: 19px; color: var(--ink-dim); }
+.now-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 18px;
+  padding: 0;
+  list-style: none;
+}
+.now-facts li {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+.now-bar { height: 28px; }
+.now-bar .pct { font-size: 16px; }
+.now-step { margin: 14px 2px 0; font-size: 20px; font-weight: 700; }
+.now-times, .now-queue { margin: 8px 2px 0; font-size: 17px; color: var(--ink-dim); }
+.now-queue { color: var(--warn, #f0a500); font-weight: 700; }
+/* .sys is written to sit at the right-hand end of the card's status line; in
+   here it is a line of its own - which is also why the VRAM figure comes back
+   on a phone. It steps aside there to keep the card's status line on one row;
+   in the sheet it has a whole row to itself and is the number that says
+   whether the card is full. Two classes deep so it beats that media query
+   wherever the two land in the file. */
+.now-sys { margin: 12px 2px 0; font-size: 16px; }
+.nowsheet .sys .vram { display: inline; }
+.now-buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.now-buttons button { flex: 1 1 150px; }
+.now-show {
+  min-height: var(--tap);
+  border-radius: 18px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--on-accent);
+  background: var(--good);
+  border: none;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.28);
+}
+@media (prefers-reduced-motion: reduce) { .nowbar-dot { animation: none; } }
+
+/* Everything they have asked for before, folded away under the prompt box. */
+.history { margin: 0 0 18px; }
+.history summary {
+  cursor: pointer;
+  list-style: none;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink-dim);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 14px;
+}
+.history summary::-webkit-details-marker { display: none; }
+.history[open] summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.history-list {
+  max-height: 44vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 2px solid var(--card-edge);
+  border-top: none;
+  border-radius: 0 0 14px 14px;
+}
+.history-item {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 16px;
+  font: inherit;
+  font-size: 17px;
+  text-align: left;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--card-edge);
+  touch-action: manipulation;
+}
+.history-item:active { background: var(--field); }
+.history-empty { margin: 0; padding: 14px 16px; font-size: 16px; color: var(--ink-dim); }
+
+/* A zero-height marker just above the tab bar. When it scrolls out of view the
+   bar is stuck, which is the only moment the bar needs a background. */
+.tabs-sentinel { height: 1px; margin-bottom: -1px; }
+
+/* One card at a time. The page had grown to four tall cards, and the one they
+   wanted was usually below the fold. */
+.tabs {
+  position: sticky;
+  top: 0;
+  /* Page chrome, so it has to stay below every full-screen sheet - the tab bar
+     was floating over the gallery and the picture viewer. The stack, in order:
+     tabs 20, sheets 30, the choose-things bar inside them 35, confetti 60,
+     the "closed" and warm-up overlays 80, the toast 90. */
+  z-index: 20;
+  display: flex;
+  gap: 6px;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 8px 16px calc(8px + env(safe-area-inset-left, 0px));
+  /* No background at rest. The page carries a radial gradient that is lightest
+     exactly here, so *any* fill - flat or translucent - reads as a dark box
+     printed on top of it. The buttons have their own background and are all
+     that needs to be visible; the bar only needs a backing once it is stuck
+     over scrolling content, which .stuck supplies. */
+  background: transparent;
+  transition: background 150ms linear;
+}
+.tabs.stuck {
+  /* The second declaration wins where color-mix is understood and is ignored
+     where it is not, so an older iPad gets a solid bar rather than no bar.
+     It used to be midnight's own background spelled out, which every other
+     colour scheme would have worn as a purple stripe. */
+  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.tab {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink-dim);
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+  border-radius: 16px;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.tab-emoji { font-size: 22px; line-height: 1; }
+.tab-word { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.tab.is-on { color: var(--on-accent); background: var(--good); border-color: var(--good); }
+.tab[data-tab="image"].is-on { background: var(--accent-image); border-color: var(--accent-image); }
+.tab[data-tab="video"].is-on { background: var(--accent-t2v); border-color: var(--accent-t2v); }
+.tab[data-tab="comic"].is-on { background: var(--accent-i2v); border-color: var(--accent-i2v); }
+/* Settings is not one of the things they make, so it does not take one of the
+   making colours. */
+.tab[data-tab="banner"].is-on { background: var(--ink-dim); border-color: var(--ink-dim); }
+.tab:active { transform: translateY(2px); }
+/* A dot on the tab whose card is busy, so leaving it does not feel like
+   abandoning the render. */
+.tab.working .tab-emoji::after {
+  content: "";
+  position: absolute;
+  margin: -6px 0 0 18px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--good);
+  animation: voice-pulse 1.2s ease-in-out infinite;
+}
+.tab.working { position: relative; }
+@media (max-width: 380px) { .tab { font-size: 12px; } .tab-emoji { font-size: 19px; } }
+
+main {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  /* minmax(0, 1fr), not the default auto: an auto track is at least as wide as
+     its widest item's min-content, so one non-shrinking child (the gallery's
+     thumbnail strip) would push the whole column past max-width and shove the
+     page sideways. This pins the track to the container instead. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+}
+
+/* --- cards --------------------------------------------------------------- */
+
+.card {
+  min-width: 0; /* same reason: let a card shrink below its content's min-content */
+  background: var(--card);
+  border: 3px solid var(--card-edge);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.card h2 {
+  margin: 0 0 14px;
+  font-size: 27px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.emoji { font-size: 32px; }
+
+/* "Start again" sits at the right-hand end of the card's own title, which is
+   already a flex row. Quiet until they need it: this is a way out of a mess,
+   not one of the things the card is for. */
+.card-reset {
+  margin-left: auto;
+  min-height: 44px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-dim);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.card-reset:active { transform: translateY(1px); }
+.card-reset:disabled { opacity: 0.4; }
+/* Armed, like every other destructive button here. */
+.card-reset.arming { color: var(--on-accent); background: var(--warn); border-color: var(--warn); }
+@media (max-width: 480px) {
+  /* The title wraps rather than the button shrinking to nothing. */
+  .card h2 { flex-wrap: wrap; }
+  .card-reset { font-size: 14px; padding: 6px 12px; }
+}
+
+.card[data-kind="image"] { border-color: var(--accent-image); }
+.card[data-kind="video"] { border-color: var(--accent-t2v); }
+.card[data-kind="video"][data-mode="i2v"] { border-color: var(--accent-i2v); }
+
+/* --- inputs -------------------------------------------------------------- */
+
+textarea {
+  width: 100%;
+  padding: 16px;
+  font: inherit;
+  font-size: 21px;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 16px;
+  resize: none;
+  -webkit-appearance: none;
+}
+textarea::placeholder { color: var(--ink-dim); opacity: 0.62; }
+textarea:focus {
+  outline: none;
+  border-color: var(--good);
+}
+
+button, .actions > *, .viewer-actions > *, .picked-row > *, .photo-btn, .tile, summary {
+  /* No double-tap-to-zoom and no 300ms delay on taps; no text-selection
+     callout on a long press. Every one of these is a button to them. */
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  -webkit-appearance: none;
+  border: none;
+}
+
+.go {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 16px;
+  border-radius: 18px;
+  font-size: 25px;
+  font-weight: 800;
+  color: var(--on-accent);
+  background: var(--accent-image);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.28);
+  transition: transform 0.06s ease;
+}
+.card[data-kind="video"] .go { background: var(--accent-t2v); }
+.card[data-kind="video"][data-mode="i2v"] .go { background: var(--accent-i2v); }
+.go:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28); }
+:focus-visible { outline: 3px solid var(--good); outline-offset: 3px; }
+.go[disabled] { opacity: 0.5; box-shadow: none; transform: none; }
+
+/* --- progress ------------------------------------------------------------ */
+
+.status { margin-top: 18px; }
+.bar {
+  height: 22px;
+  border-radius: 999px;
+  background: var(--field);
+  overflow: hidden;
+  border: 2px solid var(--card-edge);
+}
+.fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--good), var(--accent-t2v));
+  transition: width 0.5s ease;
+}
+/* Before the first real progress report, show motion so it never looks stuck. */
+.bar.waiting .fill {
+  width: 100% !important;
+  background: repeating-linear-gradient(
+    115deg, var(--card-edge) 0 22px, var(--glow) 22px 44px);
+  animation: crawl 1.1s linear infinite;
+}
+@keyframes crawl { to { background-position: 44px 0; } }
+
+.msg { margin: 12px 2px 0; font-size: 19px; color: var(--ink-dim); }
+.msg.bad { color: var(--bad); font-weight: 700; }
+
+/* --- results ------------------------------------------------------------- */
+
+.result { margin-top: 18px; }
+.result img, .result video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  background: #000;
+}
+.actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.actions > * {
+  flex: 1 1 180px;
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 18px;
+  font-size: 21px;
+  font-weight: 800;
+  text-decoration: none;
+  text-align: center;
+  color: var(--on-accent);
+  background: var(--ink);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.28);
+}
+.actions .animate { background: var(--accent-i2v); }
+.actions > *:active { transform: translateY(2px); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28); }
+
+/* --- the picked source image for i2v ------------------------------------- */
+
+.source {
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 2px dashed var(--card-edge);
+  border-radius: 16px;
+}
+.source.empty .source-empty { display: block; }
+.source:not(.empty) { border-style: solid; border-color: var(--accent-i2v); }
+.source:not(.empty) .source-empty { display: none; }
+.source-empty { margin: 0; color: var(--ink-dim); font-size: 18px; }
+.source-picked { display: flex; gap: 14px; align-items: center; }
+.source-picked img {
+  width: 140px;
+  border-radius: 12px;
+  flex: 0 0 auto;
+  background: #000;
+}
+.source-label { margin: 0 0 10px; font-size: 18px; font-weight: 700; }
+.clear {
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+
+/* Phones, and the iPad's narrow split-screen pane. */
+@media (max-width: 480px) {
+  body { font-size: 18px; }
+  .card h2 { font-size: 23px; }
+  .go { font-size: 22px; }
+  .source-picked { flex-direction: column; align-items: stretch; }
+  .source-picked img { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill { transition: none; }
+  .bar.waiting .fill { animation: none; }
+}
+
+/* --- video length picker -------------------------------------------------- */
+
+.choices {
+  display: flex;
+  gap: 10px;
+}
+/* A slider with a thumb big enough for a finger, and the number written out
+   large beside it so they never have to read the tick marks. */
+.slider-row { display: flex; align-items: center; gap: 12px; }
+.slider-end { flex: 0 0 auto; font-size: 17px; font-weight: 700; color: var(--ink-dim); }
+.length-slider {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 44px;              /* tall hit area; the track is drawn thinner */
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: pan-y;       /* let a horizontal drag move the thumb, not the page */
+}
+.length-slider::-webkit-slider-runnable-track {
+  height: 14px;
+  border-radius: 999px;
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+.length-slider::-moz-range-track {
+  height: 14px;
+  border-radius: 999px;
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+.length-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 40px;
+  height: 40px;
+  margin-top: -15px;         /* centre a 40px thumb on the 14px track (+2px border) */
+  border-radius: 50%;
+  background: var(--accent-t2v);
+  border: 4px solid #fff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+.length-slider::-moz-range-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-t2v);
+  border: 4px solid #fff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+.card[data-mode="i2v"] .length-slider::-webkit-slider-thumb { background: var(--accent-i2v); }
+.card[data-mode="i2v"] .length-slider::-moz-range-thumb { background: var(--accent-i2v); }
+.length-slider:focus { outline: none; }
+.length-slider:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--good); outline-offset: 3px; }
+.card[data-mode="i2v"] .length-out { color: var(--accent-i2v); }
+.len-note {
+  margin: 12px 2px 0;
+  font-size: 16px;
+  color: var(--ink-dim);
+}
+
+/* --- progress readout ----------------------------------------------------- */
+
+.bar { position: relative; }
+.pct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: var(--ink);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.bar.waiting .pct { display: none; }
+
+/* Time left and machine load share one row: two stacked lines pushed the
+   Stop button and the picture itself down the screen while they waited. */
+.status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 14px;
+  margin-top: 8px;
+}
+.status-line:empty { margin-top: 0; }
+
+.timing {
+  margin: 0 2px;
+  font-size: 17px;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .choices { flex-wrap: wrap; }
+}
+
+/* --- video mode toggle ---------------------------------------------------- */
+
+.opt {
+  flex: 1 1 0;
+  min-height: var(--tap);
+  border-radius: 14px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+.opt.is-on {
+  color: var(--on-accent);
+  background: var(--accent-t2v);
+  border-color: var(--accent-t2v);
+}
+.opt:active { transform: translateY(2px); }
+
+/* --- photo from the iPad -------------------------------------------------- */
+
+.photo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  margin-top: 14px;
+  border-radius: 16px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  cursor: pointer;
+}
+.photo-btn:active { transform: translateY(2px); }
+.photo-input { display: none; }
+
+/* --- the idea helper ------------------------------------------------------ */
+
+.helper {
+  display: block;
+  width: 100%;
+  min-height: 60px;
+  margin-top: 12px;
+  border-radius: 16px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px dashed var(--accent-t2v);
+}
+.helper[disabled] { opacity: 0.5; }
+.helper:active { transform: translateY(2px); }
+.helper-msg {
+  margin: 10px 2px 0;
+  font-size: 17px;
+  color: var(--ink-dim);
+}
+
+/* --- start / stop row ----------------------------------------------------- */
+
+.buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+.buttons .go { margin-top: 0; flex: 1 1 auto; }
+.stop {
+  flex: 0 0 auto;
+  min-width: 130px;
+  min-height: var(--tap);
+  border-radius: 18px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  background: #c03b5a;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.28);
+}
+.stop:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28); }
+.stop[disabled] { opacity: 0.6; }
+
+@media (max-width: 480px) {
+  .opt { font-size: 17px; }
+  .stop { min-width: 104px; font-size: 19px; }
+}
+
+/* --- landscape / portrait ------------------------------------------------- */
+
+.orient,
+.count-pick,
+.panels,
+.part-pick,
+.kind-pick,
+.qual-pick,
+.view-pick,
+.sort-pick,
+.sing-pick {
+  flex: 1 1 0;
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 14px;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+.orient.is-on,
+.count-pick.is-on,
+.panels.is-on,
+.part-pick.is-on,
+.kind-pick.is-on,
+.qual-pick.is-on,
+.view-pick.is-on,
+.sort-pick.is-on,
+.sing-pick.is-on {
+  color: var(--on-accent);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+/* The Gallery is the green card, so its own choices are green. */
+.card.mine .view-pick.is-on,
+.card.mine .sort-pick.is-on {
+  background: var(--good);
+  border-color: var(--good);
+}
+.card[data-kind="music"] .sing-pick.is-on {
+  background: var(--accent-music);
+  border-color: var(--accent-music);
+}
+.card[data-kind="image"] .orient.is-on,
+.card[data-kind="image"] .count-pick.is-on {
+  background: var(--accent-image);
+  border-color: var(--accent-image);
+}
+.card[data-kind="video"] .orient.is-on,
+.card[data-kind="video"] .part-pick.is-on,
+.card[data-kind="video"] .qual-pick.is-on,
+.card[data-kind="comic"] .panels.is-on {
+  background: var(--accent-t2v);
+  border-color: var(--accent-t2v);
+}
+.card[data-kind="video"][data-mode="i2v"] .orient.is-on {
+  background: var(--accent-i2v);
+  border-color: var(--accent-i2v);
+}
+.orient:active,
+.count-pick:active,
+.panels:active,
+.part-pick:active,
+.kind-pick:active,
+.qual-pick:active,
+.view-pick:active,
+.sort-pick:active { transform: translateY(2px); }
+
+/* little proportional glyphs, so the shape is obvious without reading */
+.box {
+  display: block;
+  border: 3px solid currentColor;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+.box.land { width: 30px; height: 17px; }
+.box.port { width: 17px; height: 23px; }
+
+@media (max-width: 480px) {
+  .orient, .count-pick, .panels, .part-pick, .kind-pick, .qual-pick,
+  .view-pick, .sort-pick { font-size: 17px; gap: 7px; }
+}
+
+/* --- style / place / lighting / mood dropdowns ---------------------------- */
+
+
+/* Always visible, as a row of the choices box. Three across on an iPad so the
+   video card's seven fit in three lines; the labels sit inside the row's body
+   so they read as part of "Look", not as a second set of headings. */
+.dropdowns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.dropdowns label {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink-dim);
+}
+.dropdowns select {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 7px;
+  padding: 0 40px 0 14px;
+  font: inherit;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--ink);
+  background-color: var(--card);
+  border: 2px solid var(--card-edge);
+  border-radius: 14px;
+  -webkit-appearance: none;
+  appearance: none;
+  /* chevron, inlined so no network request and no CSP concerns */
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23cbbcf0' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+}
+.dropdowns select:focus { outline: none; border-color: var(--accent-image); }
+.dropdowns select.is-set {
+  color: var(--on-accent);
+  background-color: var(--accent-image);
+  border-color: var(--accent-image);
+}
+
+/* A quiet link at the end of the row, not a bar the size of the Go button. */
+.reset-styles {
+  display: inline-block;
+  min-height: 40px;
+  margin-top: 8px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 2px solid var(--card-edge);
+}
+
+/* Two across down to a phone: at 414px each select is still ~160px, which
+   fits "Background sounds" and "None", and seven in one column was a scroll
+   of its own. One column only below that. */
+@media (max-width: 700px) {
+  .dropdowns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 360px) {
+  .dropdowns { grid-template-columns: 1fr; }
+}
+
+/* --- gallery -------------------------------------------------------------- */
+
+.card.mine { border-color: var(--good); }
+.mine-note { margin: 0 0 14px; font-size: 18px; color: var(--ink-dim); }
+
+/* Search on the left, "Choose" on the right; both drop to a line of their own
+   on a phone. */
+.mine-tools {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 14px 0 12px;
+}
+.mine-tools .find { flex: 1 1 200px; margin: 0; }
+@media (max-width: 480px) {
+  .mine-tools { flex-wrap: wrap; }
+  .mine-tools .sheet-select { flex: 1 1 100%; }
+}
+
+/* A row of what they actually made. Scrolls sideways, one shelf each, which is
+   what the grouped view is; the other view is one plain grid of all of it. */
+.strip {
+  min-width: 0;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
+  margin-bottom: 16px;
+}
+.strip .tile {
+  flex: 0 0 auto;
+  width: 120px;
+  aspect-ratio: 1 / 1;
+}
+.strip .badge { font-size: 13px; padding: 3px 8px; }
+/* A character with no picture yet still needs to read as a face, not a hole. */
+.cast-tile { background: var(--field); }
+
+/* Full-screen sheets, so a tap target is never behind the page underneath. */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px calc(env(safe-area-inset-bottom) + 40px);
+  background: var(--bg);
+}
+.sheet-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(env(safe-area-inset-top) + 14px) 0 14px;
+  background: var(--bg);
+  border-bottom: 2px solid var(--card-edge);
+}
+.sheet-bar h2 { margin: 0; font-size: 28px; }
+.sheet-close, .sheet-back {
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: 16px;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+}
+.sheet-close { color: var(--on-accent); background: var(--good); border-color: var(--good); }
+.sheet-empty { margin: 40px 8px; font-size: 21px; color: var(--ink-dim); text-align: center; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+.tile {
+  position: relative;
+  display: block;
+  padding: 0;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #000;
+  border: 3px solid var(--card-edge);
+}
+.tile img, .tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.tile .badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--on-accent);
+  background: var(--ink);
+}
+.tile:active { transform: scale(0.97); }
+
+/* --- the single-item viewer ----------------------------------------------- */
+
+.viewer-media { margin-top: 18px; }
+.viewer-media img, .viewer-media video {
+  display: block;
+  width: 100%;
+  max-height: 62vh;
+  object-fit: contain;
+  border-radius: 18px;
+  background: #000;
+}
+.viewer-meta {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+}
+.viewer-meta h3 { margin: 0 0 10px; font-size: 20px; }
+.viewer-prompt {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.viewer-prompt.none { color: var(--ink-dim); font-style: italic; }
+.viewer-facts { margin: 14px 0 0; font-size: 17px; color: var(--ink-dim); }
+
+.viewer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+.viewer-actions > * {
+  flex: 1 1 180px;
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  font-size: 21px;
+  font-weight: 800;
+  text-decoration: none;
+  color: var(--on-accent);
+  background: var(--ink);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.28);
+}
+.viewer-delete { color: #fff !important; background: #c03b5a; }
+.viewer-again { background: var(--good); }
+.viewer-animate { background: var(--accent-i2v); }
+.viewer-actions > *:active { transform: translateY(2px); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28); }
+
+/* Deleting confirms in the button itself. A separate confirmation panel below
+   the button was easy to miss - the eye stays on what was just tapped. */
+.arming {
+  background: #ffd23f !important;
+  color: #4a1010 !important;
+  animation: nudge 0.9s ease-in-out infinite;
+}
+@keyframes nudge {
+  0%, 100% { transform: none; }
+  50% { transform: scale(1.03); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arming { animation: none; }
+}
+
+@media (max-width: 480px) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+}
+
+/* --- pictures and videos kept apart --------------------------------------- */
+
+.shelf { margin-top: 22px; }
+.shelf:first-of-type { margin-top: 0; }
+.shelf h3 {
+  margin: 0 0 12px;
+  font-size: 21px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.shelf .count {
+  font-size: 16px;
+  margin-left: -4px;
+  font-weight: 700;
+  color: var(--ink-dim);
+}
+/* Six shelves each in their own bordered box read as a wall of empty
+   rectangles, because most of them hold one or two things. A hairline between
+   them separates them just as well without drawing a box around the space that
+   is not being used. */
+.card.mine .shelf { padding: 0; background: none; border: none; }
+.card.mine .shelf + .shelf {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--card-edge);
+}
+.card.mine .shelf .strip { margin-bottom: 0; }
+.sheet .shelf .grid { margin-top: 0; }
+
+/* --- choosing several at once --------------------------------------------- */
+
+.bar-actions { display: flex; gap: 10px; }
+.sheet-select {
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: 16px;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+}
+.sheet-select.is-on {
+  color: var(--on-accent);
+  background: var(--accent-t2v);
+  border-color: var(--accent-t2v);
+}
+
+/* Pinned to the bottom of the screen, not sticky in the flow: it must be in the
+   same place whatever is scrolled, and must never land on top of a heading. */
+.picked-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 35;
+  padding: 14px 16px calc(env(safe-area-inset-bottom) + 14px);
+  background: var(--card);
+  border-top: 3px solid var(--accent-t2v);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+}
+/* Leave room so the last row of pictures is not stuck behind the bar. */
+.card.mine.choosing { padding-bottom: 230px; }
+
+.picked-count {
+  max-width: 780px;
+  margin: 0 auto 12px;
+  font-size: 19px;
+  font-weight: 800;
+}
+.picked-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  max-width: 780px;   /* line up with the page content on a wide screen */
+  margin: 0 auto;
+}
+.picked-row > * {
+  flex: 1 1 120px;
+  min-width: 0;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  font-size: 19px;
+  font-weight: 800;
+  text-decoration: none;
+  color: var(--on-accent);
+  background: var(--ink);
+  border: none;
+}
+.picked-all { background: var(--field) !important; color: var(--ink) !important; border: 2px solid var(--card-edge) !important; }
+.picked-delete { color: #fff !important; background: #c03b5a !important; }
+.picked-row > *[aria-disabled="true"],
+.picked-row > *[disabled] { opacity: 0.45; pointer-events: none; }
+
+/* tick marks on the tiles while choosing */
+.grid.choosing .tile, .strip.choosing .tile { border-color: var(--card-edge); }
+.tile .tick {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 34px;
+  height: 34px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: 900;
+  color: transparent;
+  background: rgba(0, 0, 0, 0.45);
+  border: 3px solid #fff;
+}
+.grid.choosing .tile .tick, .strip.choosing .tile .tick { display: flex; }
+.tile.chosen { border-color: var(--good); }
+.tile.chosen .tick { color: var(--on-accent); background: var(--good); border-color: var(--good); }
+.tile.chosen img, .tile.chosen video { opacity: 0.72; }
+
+
+/* --- surprise me ---------------------------------------------------------- */
+
+.surprise {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  margin-bottom: 14px;
+  border-radius: 18px;
+  font-size: 23px;
+  font-weight: 800;
+  color: #2a1055;
+  background: linear-gradient(95deg, #ffd23f, #ff8fd0 45%, #7ee8fa);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.28);
+}
+.surprise:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28); }
+.surprise[disabled] { opacity: 0.6; }
+/* Hidden when the video card is animating a picture: the idea has to describe
+   how *that* picture moves, so a random scene would be nonsense. */
+.card[data-mode="i2v"] .surprise { display: none; }
+
+/* Confetti. Pointer-events off throughout so it can never eat a tap. */
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  pointer-events: none;
+}
+.confetti i {
+  position: absolute;
+  top: -20px;
+  width: 11px;
+  height: 18px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: fall linear forwards;
+}
+@keyframes fall {
+  0%   { opacity: 1; transform: translateY(0) rotate(0deg); }
+  100% { opacity: 0.9; transform: translateY(105vh) rotate(720deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confetti { display: none; }
+}
+
+/* --- clear the prompt box ------------------------------------------------- */
+
+.field { position: relative; }
+/* Room for the button so long text never runs underneath it. */
+.field textarea { padding-right: 62px; }
+.clear-text {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+  background: var(--card-edge);
+  border: 2px solid var(--card);
+}
+.clear-text:active { transform: scale(0.92); }
+/* The lyrics box has its own, because it is a second box in the same card and
+   sharing a class would have both listening for the same tap. */
+.clear-lyrics {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+  background: var(--card-edge);
+  border: 2px solid var(--card);
+}
+.clear-lyrics:active { transform: scale(0.92); }
+
+/* --- banner --------------------------------------------------------------- */
+
+.topbar {
+  padding: calc(env(safe-area-inset-top) + 14px) 16px 0;
+  text-align: center;
+}
+
+/* The meadow is generated by the same Flux workflow the app uses, but with no
+   text in it: Flux schnell at 4 steps cannot spell, and a misspelled banner is
+   worse than none. The title is real text on top, so it is always crisp and
+   always correct. Kept short - it is decoration above the buttons they came for. */
+.banner {
+  position: relative;
+  max-width: 748px;      /* lines up with the cards below */
+  margin: 0 auto;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  /* A wide strip, not the image's own 4:1, so it stays shallow on a phone
+     where a 4:1 image would still be taller than it needs to be. */
+  aspect-ratio: 1536 / 330;
+}
+.banner img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.banner h1 {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin: 0;
+  padding: 0 16px;
+  font-size: clamp(26px, 6.2vw, 52px);
+  line-height: 1.04;
+  letter-spacing: 0.5px;
+  color: #fff;
+  /* The title sits over a picture this app does not choose: the shipped
+     banner, or any gallery picture a child has put up there, which may be
+     white sand or a noon sky. So the contrast comes from a scrim under the
+     words rather than from a shadow tuned to one image - an earlier version
+     carried a green offset picked to sit on grass, and it did nothing at all
+     for anything else. Darkest where the words are, gone by the edges, so the
+     picture is still the thing you see. */
+  background: radial-gradient(ellipse 62% 78% at 50% 50%,
+                              rgba(0, 0, 0, 0.52) 0%,
+                              rgba(0, 0, 0, 0.34) 45%,
+                              rgba(0, 0, 0, 0) 78%);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.55),
+    0 3px 16px rgba(0, 0, 0, 0.45);
+}
+.banner h1 span {
+  font-size: 0.82em;
+  color: #ffe9a8;
+}
+
+@media (max-width: 480px) {
+  .topbar { padding-top: calc(env(safe-area-inset-top) + 10px); }
+  .banner { border-radius: 16px; aspect-ratio: 1536 / 420; }
+}
+
+/* --- songs ---------------------------------------------------------------- */
+
+/* Their words, as they wrote them: <pre> because the line breaks and the [Verse]
+   markers are how a song is read, and wrapping so a long line does not put a
+   scrollbar under the sheet. */
+.lyric-sheet {
+  margin: 0;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 17px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  color: var(--ink);
+  background: var(--field);
+  border: 1px solid var(--card-edge);
+  border-radius: 12px;
+}
+
+/* The waveform is the server's drawing of this particular song - a row of
+   identical music-note icons would say nothing about which is which. */
+.song { display: block; }
+.song-wave {
+  display: block;
+  width: 100%;
+  aspect-ratio: 640 / 240;
+  object-fit: cover;
+  border-radius: 14px;
+  background: var(--field);
+}
+.song audio {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  min-height: 44px;
+}
+.strip .song-wave, .grid .song-wave { border-radius: 0; }
+
+/* Their lyrics. Monospaced-ish line height and a taller box than the idea one:
+   this is several lines with [Verse] markers in it, not a sentence. */
+.setting.words textarea.lyrics {
+  min-height: 150px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* --- the Settings card --------------------------------------------------- */
+
+.theme-picks { display: flex; flex-wrap: wrap; gap: 10px; }
+/* Each one is painted in its own colours, which is the only honest label a
+   colour scheme can have - the name underneath is there to be said out loud,
+   not to be read for information. */
+.theme-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 84px;
+  min-height: var(--tap);
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 3px solid var(--card-edge);
+  border-radius: 16px;
+  cursor: pointer;
+}
+.theme-pick.is-on { border-color: var(--ink); }
+/* The language chips reuse the colour-scheme chip, because it is the same kind
+   of question - but a flag and a word sit on one line, where a scheme has its
+   dots above its name. */
+.lang-pick { flex-direction: row; gap: 8px; min-width: 0; }
+.theme-dots { display: flex; gap: 4px; }
+.theme-dots span {
+  width: 16px; height: 16px; border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+.theme-pick[data-theme="midnight"] { background: #2a1b52; }
+.theme-pick[data-theme="midnight"] .theme-dots span:nth-child(1) { background: #ffb02e; }
+.theme-pick[data-theme="midnight"] .theme-dots span:nth-child(2) { background: #4fd1ff; }
+.theme-pick[data-theme="midnight"] .theme-dots span:nth-child(3) { background: #ff6fd8; }
+.theme-pick[data-theme="bubblegum"] { background: #451a43; }
+.theme-pick[data-theme="bubblegum"] .theme-dots span:nth-child(1) { background: #ffd166; }
+.theme-pick[data-theme="bubblegum"] .theme-dots span:nth-child(2) { background: #6be7ff; }
+.theme-pick[data-theme="bubblegum"] .theme-dots span:nth-child(3) { background: #ff8ad4; }
+.theme-pick[data-theme="ocean"] { background: #0e3350; }
+.theme-pick[data-theme="ocean"] .theme-dots span:nth-child(1) { background: #ffc857; }
+.theme-pick[data-theme="ocean"] .theme-dots span:nth-child(2) { background: #4fd1ff; }
+.theme-pick[data-theme="ocean"] .theme-dots span:nth-child(3) { background: #7af0d4; }
+.theme-pick[data-theme="forest"] { background: #133c27; }
+.theme-pick[data-theme="forest"] .theme-dots span:nth-child(1) { background: #ffd166; }
+.theme-pick[data-theme="forest"] .theme-dots span:nth-child(2) { background: #7de08a; }
+.theme-pick[data-theme="forest"] .theme-dots span:nth-child(3) { background: #c3f26a; }
+.theme-pick[data-theme="sunset"] { background: #4b2211; }
+.theme-pick[data-theme="sunset"] .theme-dots span:nth-child(1) { background: #ffb02e; }
+.theme-pick[data-theme="sunset"] .theme-dots span:nth-child(2) { background: #ff9a5e; }
+.theme-pick[data-theme="sunset"] .theme-dots span:nth-child(3) { background: #ff6f91; }
+.theme-pick[data-theme="daylight"] { background: #ffffff; }
+.theme-pick[data-theme="daylight"] .theme-dots span:nth-child(1) { background: #f7a91b; }
+.theme-pick[data-theme="daylight"] .theme-dots span:nth-child(2) { background: #37c1f0; }
+.theme-pick[data-theme="daylight"] .theme-dots span:nth-child(3) { background: #ef6fb8; }
+.theme-pick[data-theme="daylight"] { color: #22124c; }
+
+/* Shown at the shape it will actually be, not the shape of the file: what they
+   is choosing is the strip, and a 4:1 preview of a 4:1 crop is the only
+   honest thing to show them. */
+.banner-preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1536 / 330;
+  object-fit: cover;
+  object-position: center 62%;
+  border-radius: 12px;
+  border: 1px solid var(--card-edge);
+}
+.banner-reset { margin-top: 10px; }
+/* First in the row under a finished banner, and the thing they came for. */
+.use-banner { background: var(--accent-image); color: var(--on-accent); font-weight: 800; }
+
+/* --- what should they say? ----------------------------------------------- */
+
+.say { display: block; margin-top: 12px; }
+.say-label { display: block; font-size: 18px; font-weight: 700; margin-bottom: 7px; }
+.say-label em { font-style: normal; font-weight: 500; font-size: 15px; color: var(--ink-dim); }
+.say-input, .join-title, .card-message {
+  width: 100%;
+  min-height: 56px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 20px;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 16px;
+  -webkit-appearance: none;
+}
+.say-input::placeholder, .join-title::placeholder, .card-message::placeholder { color: var(--ink-dim); opacity: 0.62; font-style: italic; }
+.say-input:focus, .join-title:focus, .card-message:focus { outline: none; border-color: var(--good); }
+
+/* --- photo or drawing ----------------------------------------------------- */
+
+.source-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.source-buttons > * { flex: 1 1 200px; margin-top: 0 !important; }
+.draw-btn, .pick-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  border-radius: 16px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+.draw-btn:active, .pick-btn:active { transform: translateY(2px); }
+
+/* --- result actions that appeared later ----------------------------------- */
+
+.actions .again { background: var(--good); }
+.actions .next { background: var(--accent-t2v); }
+.actions .share { background: #ffe9a8; }
+/* Delete, under the thing they have just made. The same red as the viewer's, so
+   the one button that takes something away looks the same wherever it is -
+   and .arming (with its !important) still paints over it while it asks. */
+.actions .bin, .toast .bin, .toast.cheer .bin { color: #fff; background: #c03b5a; }
+/* One of four: the glyph on its own, in the far corner from "Keep this one".
+   Two worded buttons do not fit a 151px tile at 390px, and side by side along
+   the bottom the bin sat on the end of "Keep this one". */
+.result .grid .bin-one {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  min-height: 38px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  background: #c03b5a;
+  border: none;
+  border-radius: 10px;
+  touch-action: manipulation;
+}
+
+/* --- viewer: favourite and the trash mode --------------------------------- */
+
+.viewer-fav { background: #ffe066; }
+.viewer-fav.is-on { background: #ffd23f; }
+.viewer-family { background: #cfe4ff; }
+.viewer-family.is-on { background: #9dc9ff; }
+.viewer-next { background: var(--accent-t2v); }
+.viewer-share { background: #ffe9a8; }
+.viewer-restore { background: var(--good); }
+.viewer-destroy { color: #fff !important; background: #c03b5a; }
+.tile .star {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 22px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
+}
+
+/* --- the family shelf ------------------------------------------------------
+   Whose a thing is, on any tile that is not theirs, and again in the viewer.
+   Top right: the kind badge already has the top left and the star the bottom
+   right, and the bottom edge belongs to the name caption. */
+.tile .maker {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: calc(100% - 16px);
+  padding: 3px 10px 3px 3px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--on-accent);
+  background: var(--ink);
+}
+.tile .maker .maker-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.maker-face {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+  line-height: 1;
+  border-radius: 50%;
+  /* The same colour-and-emoji face the picker draws: a profile has one from
+     the moment it is named, whether or not a picture has been made yet. */
+  background: var(--face, #f7b32b);
+  overflow: hidden;
+}
+.maker-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.viewer-maker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 800;
+}
+.viewer-maker .maker-face { width: 34px; height: 34px; font-size: 19px; }
+
+/* --- recently deleted ----------------------------------------------------- */
+
+.trash {
+  margin-top: 28px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 2px dashed var(--card-edge);
+}
+.trash summary {
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+.trash summary::-webkit-details-marker { display: none; }
+.trash summary::after { content: " ▸"; color: var(--ink-dim); }
+.trash[open] summary::after { content: " ▾"; }
+.trash-note { margin: 10px 0 0; font-size: 16px; color: var(--ink-dim); }
+.trash-grid { margin-top: 14px; }
+.trash-grid .tile img, .trash-grid .tile video { opacity: 0.6; filter: grayscale(0.4); }
+
+/* --- the drawing sheet ---------------------------------------------------- */
+
+.sheet.draw { display: flex; flex-direction: column; padding-bottom: 0; }
+.draw-tools { padding: 12px 0 8px; }
+.palette { display: flex; gap: 10px; flex-wrap: wrap; }
+.swatch {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 4px solid transparent;
+  box-shadow: 0 0 0 2px var(--card-edge);
+}
+.swatch.is-on { border-color: var(--ink); transform: scale(1.12); }
+.brushes { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.brush {
+  width: 52px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+.brush span { display: block; border-radius: 50%; background: var(--ink); }
+.brush.is-on { border-color: var(--good); background: var(--card); }
+.tool {
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+.tool.is-on { border-color: var(--good); background: var(--card); }
+.canvas-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 6px -16px 0;
+  background: #fff;
+  /* The canvas must own every touch, or a stroke scrolls the sheet instead. */
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+.draw-canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+.draw-note { margin: 8px 0 calc(env(safe-area-inset-bottom) + 10px); font-size: 16px; color: var(--ink-dim); text-align: center; }
+
+/* --- square ---------------------------------------------------------------- */
+
+.box.sq { width: 21px; height: 21px; }
+
+/* --- join into a movie ----------------------------------------------------- */
+
+.picked-join { background: var(--accent-t2v) !important; }
+.join-note { margin: 18px 0 0; font-size: 18px; color: var(--ink-dim); }
+.title-preview {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  margin: 16px auto 0;
+  border-radius: 16px;
+  background: #000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.join-go { max-width: 640px; margin: 18px auto 0; background: var(--accent-t2v); }
+.join-status { margin: 14px 0 0; font-size: 19px; text-align: center; color: var(--ink-dim); }
+
+/* --- viewer extras ---------------------------------------------------------- */
+
+.viewer-draw { background: #ffe066; }
+.viewer-print { background: var(--ink); }
+.viewer-face { background: var(--accent-image); color: var(--on-accent); font-weight: 800; }
+
+/* --- stamps ---------------------------------------------------------------- */
+
+.stamps { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.stamp {
+  width: 48px;
+  height: 46px;
+  border-radius: 14px;
+  font-size: 26px;
+  line-height: 1;
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+.stamp.is-on { border-color: var(--good); background: var(--card); transform: scale(1.1); }
+.canvas-wrap { display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.draw-canvas { max-width: 100%; max-height: 100%; }
+
+/* --- closed for now ---------------------------------------------------------- */
+
+.paused {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(27, 16, 53, 0.96);
+}
+.paused-card {
+  max-width: 460px;
+  padding: 32px;
+  border-radius: 24px;
+  text-align: center;
+  background: var(--card);
+  border: 3px solid var(--card-edge);
+}
+/* The daily warm-up wears the "closed" overlay's clothes - same full-screen
+   card, so there is only one way a blocking message ever looks. */
+.quiz .paused-card { max-width: 420px; }
+.sums { margin: 22px 0 6px; display: grid; gap: 12px; }
+.sum {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+.sum.wrong { border-color: var(--bad); }
+.sum.right { border-color: var(--good); }
+.sum-q {
+  flex: 1 1 auto;
+  text-align: right;
+  /* "529 − 118" wrapping onto two lines made the sum harder to read than the
+     sum itself is. It shrinks on a narrow screen rather than folding. */
+  white-space: nowrap;
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+.sum-eq { font-size: 26px; color: var(--ink-dim); }
+.sum input {
+  width: 110px;
+  min-height: 54px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 26px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--ink);
+  background: var(--bg);
+  border: 2px solid var(--card-edge);
+  border-radius: 12px;
+}
+.sum input:focus { outline: none; border-color: var(--accent-t2v); }
+.quiz-msg { margin: 10px 0 0 !important; font-size: 17px !important; font-weight: 700; }
+.quiz-msg.bad { color: var(--bad); }
+.quiz-msg.good { color: var(--good); }
+.quiz .go { margin-top: 16px; width: 100%; }
+
+/* Folded away and small: it is for whoever is standing behind them, and it
+   should not read to them as a button they are meant to press. */
+.grownup { margin-top: 18px; text-align: left; }
+.grownup summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 14px;
+  text-align: center;
+  color: var(--ink-dim);
+  padding: 6px;
+}
+.grownup summary::-webkit-details-marker { display: none; }
+.grownup-row { display: flex; gap: 8px; margin-top: 8px; }
+.grownup-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 20px;
+  letter-spacing: 4px;
+  text-align: center;
+  color: var(--ink);
+  background: var(--bg);
+  border: 2px solid var(--card-edge);
+  border-radius: 12px;
+}
+.grownup-row button {
+  flex: 0 0 auto;
+  min-height: 46px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 12px;
+}
+.grownup-msg { margin: 8px 0 0 !important; font-size: 14px !important; text-align: center; }
+.grownup-msg.bad { color: var(--bad); }
+
+@media (max-width: 430px) {
+  .sum { gap: 8px; padding: 10px; }
+  .sum-q, .sum-eq { font-size: 22px; }
+  .sum input { width: 92px; font-size: 22px; }
+}
+
+/* Four results at once: a grid they pick from, not a stack they scroll. */
+.result .grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.result .grid figure {
+  margin: 0;
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 3px solid transparent;
+  background: var(--field);
+}
+.result .grid figure.chosen { border-color: var(--good); }
+.result .grid img { width: 100%; display: block; cursor: pointer; }
+.result .grid .pick {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  min-height: 38px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--on-accent);
+  background: var(--good);
+  border: none;
+  border-radius: 10px;
+  touch-action: manipulation;
+}
+.result .grid figure.chosen .pick { background: var(--ink); color: var(--card); }
+
+/* Search and albums, at the top of the gallery sheet. */
+.find { position: relative; margin: 0 0 12px; }
+.find input {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 44px 0 14px;
+  font: inherit;
+  font-size: 18px;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 16px;
+  -webkit-appearance: none;
+}
+.find input::-webkit-search-cancel-button { display: none; }
+.find-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
+  color: var(--ink);
+  background: var(--card-edge);
+  border: none;
+  border-radius: 50%;
+  touch-action: manipulation;
+}
+.albums { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+
+/* Their own name for a thing, and its tags, at the top of the viewer where the
+   filename used to be the only identity anything had. */
+.viewer-name-row { display: block; margin-bottom: 12px; }
+.viewer-name {
+  width: 100%;
+  min-height: 56px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 14px;
+}
+.viewer-name:focus { outline: none; border-color: var(--good); }
+.viewer-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 8px 0 14px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 999px;
+  touch-action: manipulation;
+}
+.tag-chip .x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--card-edge);
+  font-size: 15px;
+}
+.tag-add { padding: 0 16px; color: var(--ink-dim); border-style: dashed; }
+/* The tile caption, so a named thing is recognisable without opening it. */
+.tile-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16px 8px 6px;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #fff;
+  text-align: left;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.82), transparent);
+  border-radius: 0 0 12px 12px;
+  pointer-events: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.album-chip {
+  min-height: 44px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 999px;
+  touch-action: manipulation;
+}
+.album-chip.is-on { color: var(--on-accent); background: var(--good); border-color: var(--good); }
+
+/* One toast, bottom centre: "deleted - undo?" and the milestone confetti. */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Two buttons fit beside the words on an iPad and not on a phone, so the
+     line is allowed to wrap rather than run off the side of the screen. */
+  flex-wrap: wrap;
+  gap: 12px;
+  /* Fixed and pulled back by half its own width, so the space the browser
+     offers it is only half the screen. Without `width: max-content` it sizes
+     itself to that half and wraps a line that would have fitted. */
+  width: max-content;
+  max-width: min(92vw, 520px);
+  padding: 14px 18px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+  /* The same half-height as the old pill on one line, and a rounded box
+     rather than an ellipse on the phone, where two buttons take a second. */
+  border-radius: 26px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.toast.cheer { color: var(--on-accent); background: var(--good); border-color: var(--good); }
+.toast button {
+  flex: none;
+  min-height: 40px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--on-accent);
+  background: var(--good);
+  border: none;
+  border-radius: 999px;
+  touch-action: manipulation;
+}
+.toast.cheer button { color: var(--ink); background: var(--card); }
+
+/* "Who's in it?" - their saved characters, as chips on every making card. */
+.cast { margin: 0 0 18px; }
+.cast-label { display: block; margin-bottom: 8px; font-size: 17px; font-weight: 700; color: var(--ink-dim); }
+.cast-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.cast-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 14px 0 8px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 999px;
+  touch-action: manipulation;
+}
+.cast-chip img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #000;
+}
+.cast-chip.is-on { color: var(--on-accent); background: var(--good); border-color: var(--good); }
+.cast-chip.nobody { padding-left: 14px; }
+
+/* The recording sheet: one enormous button, because that is the whole job. */
+.voice-note { margin: 0 0 16px; font-size: 18px; color: var(--ink-dim); }
+.voice-preview {
+  width: 100%;
+  max-height: 34vh;
+  border-radius: 16px;
+  background: #000;
+  display: block;
+  margin-bottom: 18px;
+}
+.voice-record {
+  width: 100%;
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font: inherit;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--on-accent);
+  background: var(--good);
+  border: none;
+  border-radius: 22px;
+  touch-action: manipulation;
+}
+.voice-record[data-on="1"] { color: #fff; background: #c03b5a; }
+.voice-record:disabled { opacity: 0.5; }
+.voice-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--on-accent);
+  flex: none;
+}
+.voice-record[data-on="1"] .voice-dot {
+  background: #fff;
+  animation: voice-pulse 1s ease-in-out infinite;
+}
+@keyframes voice-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.voice-time {
+  margin: 14px 0 0;
+  font-size: 30px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.voice-playback { width: 100%; margin-top: 16px; }
+/* Up near the top, not buried under the buttons: a failure they cannot see is
+   indistinguishable from a button that does nothing. */
+.voice-status {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--on-accent);
+  background: var(--warn);
+}
+.voice-status.working { color: var(--ink); background: var(--field); font-weight: 500; }
+.voice-keep {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  font-size: 16px;
+  color: var(--ink-dim);
+}
+.voice-keep input { width: 26px; height: 26px; flex: none; }
+.voice-file {
+  display: block;
+  margin-top: 22px;
+  font-size: 15px;
+  color: var(--ink-dim);
+}
+.voice-file span { display: block; margin-bottom: 8px; }
+.voice-file input { font: inherit; font-size: 15px; color: var(--ink-dim); }
+/* "Put it on my video" is the whole point of this sheet, so it gets the width
+   and the colour, with "record it again" underneath rather than beside it. */
+.voice-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.voice-actions button {
+  flex: 1 1 0;
+  min-height: var(--tap);
+  font: inherit;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 16px;
+  touch-action: manipulation;
+}
+.voice-actions .voice-use {
+  min-height: 76px;
+  font-size: 22px;
+  color: var(--on-accent);
+  background: var(--good);
+  border-color: var(--good);
+}
+.voice-actions .voice-discard { color: var(--bad); }
+.sheet-close.voice-cancel { color: var(--ink); background: var(--field); border: 2px solid var(--card-edge); }
+@media (prefers-reduced-motion: reduce) {
+  .voice-record[data-on="1"] .voice-dot { animation: none; }
+}
+
+.paused-emoji { font-size: 64px; margin: 0 0 8px; }
+.paused-card h2 { margin: 0 0 10px; font-size: 28px; }
+.paused-card p { margin: 0; font-size: 20px; color: var(--ink-dim); }
+
+/* --- printing a picture ------------------------------------------------------ */
+
+@media print {
+  body { background: #fff !important; padding: 0 !important; }
+  body > *:not(#viewer) { display: none !important; }
+  #viewer { position: static !important; padding: 0 !important; background: #fff !important; overflow: visible !important; }
+  #viewer .sheet-bar, #viewer .viewer-meta, #viewer .viewer-actions { display: none !important; }
+  #viewer .viewer-media { margin: 0 !important; }
+  #viewer .viewer-media img {
+    max-height: none !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+  }
+  @page { margin: 1cm; }
+}
+
+/* --- make a card ------------------------------------------------------------ */
+
+.viewer-card { background: #ffb3c6; }
+.card-colours { display: flex; gap: 10px; margin-top: 14px; }
+.card-preview {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  margin: 16px auto 0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* --- machine readout under the bar ------------------------------------------- */
+
+.sys {
+  margin: 0 2px;
+  margin-left: auto;
+  font-size: 15px;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2px;
+}
+.sys span + span::before { content: " · "; }
+.sys b { color: var(--ink); font-weight: 700; }
+.sys .hot { color: var(--good); }
+
+/* On a phone the row would wrap and cost the height it was meant to save, so
+   the VRAM figure - the least interesting of the three - steps aside. */
+@media (max-width: 560px) {
+  .sys .vram { display: none; }
+  .timing { font-size: 15px; }
+  .sys { font-size: 14px; }
+}
+
+/* "3 pictures left today" - only rendered when a limit is actually set. */
+.allowance {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+/* Quieter than the allowance above it: a countdown they have to obey, then a
+   number that only tells them whether to wait or go and do something else. */
+.eta-note {
+  margin: 8px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ink-dim);
+}
+.allowance.none-left {
+  color: var(--on-accent);
+  background: var(--warn);
+  border-color: var(--warn);
+}
+
+/* --- the chat tab -------------------------------------------------------- */
+
+.tab[data-tab="chat"].is-on { background: var(--accent-chat); border-color: var(--accent-chat); }
+
+/* Five tabs, not four: the words have to survive an iPhone SE. The emoji
+   carries the meaning at that width and the word is the confirmation. */
+@media (max-width: 430px) {
+  .tab { font-size: 12px; min-height: 56px; }
+  .tab-emoji { font-size: 20px; }
+}
+
+.chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 180px;
+  max-height: 56vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px;
+  margin-bottom: 14px;
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 18px;
+  overscroll-behavior: contain;
+}
+.bubble {
+  max-width: 86%;
+  padding: 12px 15px;
+  border-radius: 18px;
+  font-size: 19px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.bubble.kid, .bubble.her {
+  align-self: flex-end;
+  color: var(--on-accent);
+  background: var(--accent-chat);
+  border-bottom-right-radius: 6px;
+}
+.bubble.helper {
+  align-self: flex-start;
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+  border-bottom-left-radius: 6px;
+}
+/* Under each thing the helper said: turn it into a picture or a video without
+   retyping it. Aligned with the bubble above, and small enough not to compete
+   with the words. */
+.bubble-use {
+  align-self: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 86%;
+  margin: -2px 0 4px 6px;
+}
+.bubble-use button {
+  min-height: 44px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.bubble-use button:active { transform: translateY(1px); }
+
+/* A redirected answer and a broken helper are different things, and they should
+   be able to tell which one they are looking at. */
+.bubble.blocked { border-color: var(--warn); }
+.bubble.oops { border-color: var(--bad); color: var(--bad); }
+
+.bubble.thinking {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 16px 18px;
+}
+.bubble.thinking span {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--ink-dim);
+  animation: blip 1.1s infinite ease-in-out;
+}
+.bubble.thinking span:nth-child(2) { animation-delay: 0.15s; }
+.bubble.thinking span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes blip {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bubble.thinking span { animation: none; opacity: 0.6; }
+}
+
+.chat-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.starter {
+  flex: 1 1 auto;
+  min-height: 48px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px dashed var(--card-edge);
+  border-radius: 14px;
+}
+.starter:active { transform: translateY(2px); }
+
+.chat-ask { display: flex; gap: 10px; align-items: flex-end; }
+.chat-ask textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+  resize: none;
+}
+.chat-send {
+  flex: 0 0 auto;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 18px;
+  font-size: 26px;
+  color: var(--on-accent);
+  background: var(--good);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.28);
+}
+.chat-send:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28); }
+.chat-send[disabled] { opacity: 0.5; }
+
+.chat-clear {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 14px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 2px solid var(--card-edge);
+  border-radius: 14px;
+}
+.chat-off {
+  padding: 12px 14px;
+  margin: 0 0 14px;
+  font-size: 18px;
+  color: var(--warn);
+  background: var(--field);
+  border: 2px solid var(--warn);
+  border-radius: 14px;
+}
+
+/* --- surprise me, and mix up an old one ---------------------------------- */
+
+
+/* --- sheets that scrub a video: sounds, and grabbing a frame ------------- */
+
+.sheet-video {
+  display: block;
+  width: 100%;
+  max-height: 40vh;
+  margin-bottom: 16px;
+  background: #000;
+  border-radius: 16px;
+}
+.when-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.when-row input[type="range"] { flex: 1 1 auto; min-width: 0; }
+.when-out {
+  flex: 0 0 auto;
+  min-width: 64px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-t2v);
+}
+
+.sound-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.sound-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 60px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 14px;
+  text-align: left;
+}
+.sound-emoji { font-size: 24px; line-height: 1; }
+.sound-pick.is-on {
+  color: var(--on-accent);
+  background: var(--accent-t2v);
+  border-color: var(--accent-t2v);
+}
+.sound-pick:active { transform: translateY(2px); }
+
+.frame-shot {
+  margin-bottom: 18px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+  min-height: 80px;
+}
+.frame-shot img { display: block; width: 100%; }
+
+/* --- which of these two? ------------------------------------------------- */
+
+.compare-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #000;
+  border: 3px solid var(--card-edge);
+}
+.compare-a { display: block; width: 100%; }
+.compare-b-wrap { position: absolute; inset: 0; }
+.compare-b { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.compare-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  margin-left: -2px;
+  background: var(--ink);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+#compare-slider { display: block; width: 100%; margin: 16px 0; }
+.compare-picks { display: flex; gap: 12px; }
+.compare-pick {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--tap);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+  border-radius: 16px;
+}
+.compare-pick:active { transform: translateY(2px); }
+.compare-pick[disabled] { color: var(--on-accent); background: var(--warn); border-color: var(--warn); opacity: 1; }
+
+/* --- a character's own page ---------------------------------------------- */
+
+.cast-see {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 10px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px dashed var(--card-edge);
+  border-radius: 14px;
+}
+.cast-see:active { transform: translateY(2px); }
+.cast-hero { text-align: center; }
+.cast-hero img {
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 24px;
+  border: 3px solid var(--card-edge);
+}
+.cast-look {
+  margin: 12px 0 0;
+  font-size: 18px;
+  color: var(--ink-dim);
+  text-align: center;
+}
+.cast-forget {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 24px;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--bad);
+  background: transparent;
+  border: 2px solid var(--bad);
+  border-radius: 16px;
+}
+
+/* --- the chat tab -------------------------------------------------------- */
+
+.tab[data-tab="chat"].is-on { background: var(--accent-chat); border-color: var(--accent-chat); }
+
+/* Six tabs now. The word is the part that gives first: at 414px the emoji
+   stays readable and "Gallery" ellipses rather than the row wrapping. Below
+   that it does wrap, into two rows of three - six tabs squeezed onto one row
+   on a phone leaves each of them narrower than a thumb. */
+@media (max-width: 460px) {
+  .tabs { gap: 4px; }
+  .tab { font-size: 12px; }
+  .tab-emoji { font-size: 20px; }
+}
+@media (max-width: 440px) {
+  /* Seven tabs on one phone row leaves each of them narrower than a thumb, so
+     they wrap - four then three, rather than three rows of two and a bit. */
+  .tabs { flex-wrap: wrap; }
+  .tab { flex: 1 1 22%; }
+}
+
+.chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 180px;
+  max-height: 52vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 18px;
+}
+.bubble {
+  max-width: 85%;
+  padding: 11px 15px;
+  border-radius: 18px;
+  font-size: 19px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.bubble.helper {
+  align-self: flex-start;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+  border-bottom-left-radius: 6px;
+}
+.bubble.kid, .bubble.her {
+  align-self: flex-end;
+  color: var(--on-accent);
+  background: var(--accent-chat);
+  border-bottom-right-radius: 6px;
+}
+/* Said something it would not repeat, or could not answer. Marked so they can
+   tell "I won't" from "I didn't hear you", without it looking like an error. */
+.bubble.blocked { background: var(--card); border-color: var(--warn); }
+.bubble.oops { background: var(--card); border-color: var(--bad); color: var(--bad); }
+
+.bubble.thinking {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 16px 18px;
+}
+.bubble.thinking span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ink-dim);
+  animation: chat-think 1.1s infinite ease-in-out;
+}
+.bubble.thinking span:nth-child(2) { animation-delay: 0.15s; }
+.bubble.thinking span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes chat-think {
+  0%, 70%, 100% { opacity: 0.25; transform: translateY(0); }
+  35% { opacity: 1; transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bubble.thinking span { animation: none; opacity: 0.6; }
+}
+
+.chat-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.starter {
+  flex: 1 1 auto;
+  min-height: 48px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+  border-radius: 14px;
+}
+.starter:active { transform: translateY(2px); }
+
+.chat-ask { display: flex; gap: 10px; align-items: stretch; }
+.chat-ask textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 20px;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 16px;
+  resize: none;
+}
+.chat-send {
+  flex: 0 0 auto;
+  width: var(--tap);
+  border-radius: 16px;
+  font-size: 26px;
+  color: var(--on-accent);
+  background: var(--accent-chat);
+  border: none;
+}
+.chat-send[disabled] { opacity: 0.5; }
+.chat-send:active { transform: translateY(2px); }
+
+.chat-clear {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 14px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 2px solid var(--card-edge);
+  border-radius: 14px;
+}
+.chat-off {
+  padding: 12px 14px;
+  margin: 0 0 12px;
+  color: var(--warn);
+  background: var(--field);
+  border: 2px solid var(--warn);
+  border-radius: 14px;
+  font-size: 18px;
+}
+
+/* --- surprise me, and mix up an old one ---------------------------------- */
+
+
+/* --- a film in several parts --------------------------------------------- */
+
+.film-parts {
+  margin: 14px 0 0;
+  padding-left: 26px;
+  color: var(--ink-dim);
+  font-size: 18px;
+}
+.film-parts li { margin-bottom: 4px; }
+
+/* The same list, but while it is being filmed: what the model made of their one
+   sentence, with the part happening now marked. */
+.film-plan {
+  margin: 12px 0 0;
+  padding-left: 26px;
+  font-size: 16px;
+  color: var(--ink-dim);
+  text-align: left;
+}
+.film-plan li { margin-bottom: 6px; }
+.film-plan .plan-says { display: block; font-style: italic; }
+.film-plan li.is-done { opacity: 0.55; text-decoration: line-through; }
+.film-plan li.is-done .plan-says { text-decoration: none; }
+.film-plan li.is-now { color: var(--ink); font-weight: 700; }
+
+/* --- sheets that scrub a video: sounds, and grabbing a frame -------------- */
+
+.sheet-video {
+  display: block;
+  width: 100%;
+  max-height: 46vh;
+  margin-bottom: 16px;
+  background: #000;
+  border-radius: 16px;
+}
+.when-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 19px;
+  font-weight: 700;
+}
+.when-row input[type="range"] { flex: 1 1 auto; min-width: 0; }
+.when-out {
+  flex: 0 0 auto;
+  min-width: 64px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-t2v);
+}
+
+.sound-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.sound-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 60px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 14px;
+  text-align: left;
+}
+.sound-emoji { font-size: 24px; line-height: 1; }
+.sound-pick.is-on {
+  color: var(--on-accent);
+  background: var(--accent-t2v);
+  border-color: var(--accent-t2v);
+}
+.sound-pick:active { transform: translateY(2px); }
+
+.frame-shot {
+  margin-bottom: 18px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+  min-height: 120px;
+}
+.frame-shot img { display: block; width: 100%; height: auto; }
+
+/* The moving-sticker sheet is the frame grabber's scrubber with one extra
+   question on it. The two length buttons sit in a .when-row, which is a flex
+   row built around a slider, so they have to be told to take the space the
+   slider would otherwise have had - without this they collapse to their text
+   and sit against the label. */
+.looper .when-row .choices { flex: 1 1 auto; min-width: 0; }
+
+/* --- which of these two? ------------------------------------------------- */
+
+.compare-wrap {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #000;
+  border: 3px solid var(--card-edge);
+}
+.compare-a { display: block; width: 100%; height: auto; }
+.compare-b-wrap { position: absolute; inset: 0; }
+.compare-b { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.compare-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  margin-left: -2px;
+  background: var(--ink);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+#compare-slider { display: block; width: 100%; margin: 18px 0; }
+.compare-picks { display: flex; gap: 12px; }
+.compare-pick {
+  flex: 1 1 0;
+  min-height: var(--tap);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+  border-radius: 16px;
+}
+.compare-pick[disabled] { color: var(--on-accent); background: var(--warn); border-color: var(--warn); opacity: 1; }
+.compare-pick:active { transform: translateY(2px); }
+
+/* --- a character's own page ---------------------------------------------- */
+
+.cast-hero { text-align: center; }
+.cast-hero img {
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 24px;
+  border: 3px solid var(--card-edge);
+}
+.cast-look {
+  margin: 12px 0 0;
+  color: var(--ink-dim);
+  font-size: 18px;
+  text-align: center;
+}
+.cast-see {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 10px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 14px;
+}
+.cast-see:active { transform: translateY(2px); }
+.cast-forget {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 24px;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--bad);
+  background: transparent;
+  border: 2px solid var(--bad);
+  border-radius: 16px;
+}
+
+/* The three things looking after a character means, under their picture. */
+.cast-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.cast-actions button {
+  min-height: 46px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+  border-radius: 12px;
+}
+.cast-actions button:active { transform: translateY(2px); }
+
+/* --- forgetting one of the things they asked for before -------------------- */
+/* The row carries the divider now, not the button inside it, or the X would
+   sit outside the line it belongs to. */
+
+.history-row {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--card-edge);
+}
+.history-row:first-child { border-top: none; }
+.history-item { flex: 1 1 auto; min-width: 0; width: auto; border-top: none; }
+.history-drop {
+  flex: 0 0 auto;
+  width: 56px;
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ink-dim);
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--card-edge);
+  touch-action: manipulation;
+}
+.history-drop:active { color: var(--bad); background: var(--field); }
+
+/* Offered the moment a picture appears, which is when they know whether they
+   wants to keep whoever is in it. */
+.actions .keep-who { background: var(--accent-chat); }
+
+/* --- a picture, or a character on its own --------------------------------- */
+
+.kind-pick { flex: 1 1 0; }
+.card[data-kind="image"] .kind-pick.is-on {
+  background: var(--accent-image);
+  border-color: var(--accent-image);
+}
+.kind-note { margin-top: 10px; }
+
+/* A character picture exists to be cut out, so the button is right there under
+   it rather than three taps away in the gallery. */
+.actions .cut-out { background: var(--good); }
+
+
+/* --- how a maker card is organised ---------------------------------------- */
+/* Three things, in order: the idea, then every choice in one box, then Go.
+   It used to be a bordered fieldset per setting, a collapsible bar or two, and
+   a bare label with chips - three different treatments fighting on one card,
+   with the word-helpers split above and below the box. */
+
+.idea { margin-bottom: 16px; }
+
+/* Every tool that helps with the words, in one row under the box. */
+.tools { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.tools > button {
+  flex: 1 1 190px;
+  min-width: 0;
+  min-height: 56px;
+  margin: 0;
+  padding: 0 14px;
+  width: auto;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tools .helper { border: 2px dashed var(--accent-t2v); }
+.tools .surprise { box-shadow: 0 4px 0 rgba(0, 0, 0, 0.28); }
+.tools .surprise:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28); }
+.tools .remix { box-shadow: 0 4px 0 rgba(0, 0, 0, 0.28); }
+.tools .remix:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28); }
+/* Animating a picture needs words about *that* picture: a random idea would
+   be nonsense, so those two go and the helper (which looks at the picture)
+   takes the whole row. */
+.card[data-mode="i2v"] .surprise,
+.card[data-mode="i2v"] .remix { display: none; }
+
+.idea .history { margin: 12px 0 0; }
+.idea .say { margin-top: 14px; }
+.hint { margin: 8px 2px 0; font-size: 16px; color: var(--ink-dim); }
+
+/* One box, one labelled row per choice. The 1px gap over the container's
+   background is what draws the dividers, so a hidden row (no characters yet,
+   not in film mode) simply leaves no line behind - a border-top on each row
+   would strand one at the top whenever the first row was hidden. */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 16px;
+  background: var(--card-edge);
+  border: 2px solid var(--card-edge);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.settings.mode { margin: 0 0 16px; }
+.setting {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--card);
+}
+.setting-label {
+  flex: 0 0 118px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink-dim);
+}
+.setting-body { flex: 1 1 auto; min-width: 0; }
+.setting .choices { display: flex; gap: 8px; }
+/* Lighter than the 68px hero buttons: there are several rows of these and
+   they are choices, not the thing they came to press. */
+.setting .choices > button { min-height: 56px; font-size: 18px; padding: 0 10px; }
+.setting .len-note, .setting .kind-note { margin: 8px 2px 0; }
+.settings .cast { margin: 0; }
+.setting .cast-row { gap: 8px; }
+.setting .cast-see { margin-top: 8px; }
+
+
+/* The length readout sits at the end of the slider row, not as a big number
+   underneath it. */
+.setting .slider-row { gap: 10px; }
+.length-readout {
+  flex: 0 0 auto;
+  min-width: 46px;
+  text-align: right;
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.length-out { color: var(--accent-t2v); }
+
+@media (max-width: 560px) {
+  .setting { flex-direction: column; align-items: stretch; gap: 8px; }
+  .setting-label { flex: 0 0 auto; }
+  /* Three across, not two and a straggler: at 28% basis three fit a 336px
+     row, and a two-choice row still grows to halves. Smaller type to pay
+     for it. */
+  .setting .choices { flex-wrap: wrap; gap: 6px; }
+  .setting .choices > button {
+    flex: 1 1 28%; min-width: 0; font-size: 16px; padding: 0 6px; gap: 6px;
+    white-space: normal; line-height: 1.15;
+  }
+  /* Four of these in the row, so two by two rather than three and a straggler. */
+  .setting .choices > .sort-pick { flex: 1 1 45%; }
+  /* "Landscape" beside its little glyph is wider than a third of a phone row
+     and left "Square" on a line of its own. The word says it; the glyph goes. */
+  .setting .orient .box { display: none; }
+  .setting .orient { font-size: 15px; }
+  /* The helper takes a row of its own; the two idea buttons share the next. */
+  .tools .helper { flex: 1 1 100%; }
+  .tools .surprise, .tools .remix { flex: 1 1 140px; }
+}
+
+
+/* --- clearing what they say ----------------------------------------------- */
+/* The same ✕ the idea box has. It was the one text field on the page without
+   one, and a 120-character line is a lot to backspace on an iPad. */
+.say-field { display: block; position: relative; }
+.say-field .say-input { padding-right: 58px; }
+.clear-say {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  margin-top: -20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--card-edge);
+  border: none;
+}
+.clear-say:active { transform: scale(0.94); }
+
+
+/* --- a sound effect chosen with the video --------------------------------- */
+/* Styled like the dropdowns above it, because to them it is one more of them. */
+.effect-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+.effect-row label { display: block; font-size: 17px; font-weight: 700; color: var(--ink-dim); }
+.effect-row select {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 7px;
+  padding: 0 40px 0 14px;
+  font: inherit;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--ink);
+  background-color: var(--card);
+  border: 2px solid var(--card-edge);
+  border-radius: 14px;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23cbbcf0' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+}
+.effect-row select.is-set { color: var(--on-accent); background-color: var(--accent-t2v); border-color: var(--accent-t2v); }
+@media (max-width: 700px) { .effect-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 360px) { .effect-row { grid-template-columns: 1fr; } }
+
+/* The three they did not keep fade back, so the one they did is the picture. */
+.result figure.binned { opacity: 0.35; }
+
+/* The sharper warning only when sharper is chosen; it is a warning, not a
+   caption. */
+.qual-note { display: none; color: var(--warn); }
+.card[data-quality="sharp"] .qual-note { display: block; }
+
+/* --- from one picture to another ------------------------------------------ */
+
+.between {
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 2px dashed var(--card-edge);
+  border-radius: 16px;
+}
+.slots { display: flex; align-items: stretch; gap: 10px; margin-top: 12px; }
+.slot {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+}
+.slot.filled { border-color: var(--accent-i2v); }
+.slot-label { font-size: 16px; font-weight: 800; color: var(--ink-dim); }
+.slot-img { width: 100%; max-width: 220px; border-radius: 10px; display: block; }
+.slot-pick, .slot-clear {
+  width: 100%;
+  min-height: 48px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+  border-radius: 12px;
+}
+.slot-clear { font-size: 14px; color: var(--ink-dim); min-height: 40px; }
+.slot-arrow { align-self: center; font-size: 30px; color: var(--ink-dim); flex: 0 0 auto; }
+/* Like animating one picture: the words are about the pictures, so the random
+   idea buttons go and the shape follows the pictures too. */
+.card[data-mode="flf"] .surprise,
+.card[data-mode="flf"] .remix { display: none; }
+.card[data-kind="video"][data-mode="flf"] { border-color: var(--accent-i2v); }
+.card[data-kind="video"][data-mode="flf"] .go { background: var(--accent-i2v); }
+.card[data-kind="video"][data-mode="flf"] .orient.is-on { background: var(--accent-i2v); border-color: var(--accent-i2v); }
+@media (max-width: 480px) {
+  .slots { flex-direction: column; }
+  .slot-arrow { transform: rotate(90deg); }
+}
+
+
+/* --- the way out, for a parent -------------------------------------------- */
+/* At the very bottom, quiet, after everything they came for. It is not hidden -
+   a child who taps it hits the PIN, or a page of settings that is no use to
+   them - but it should not compete with the Go button. */
+.grown-up { margin: 34px auto 0; max-width: 748px; padding: 0 16px; text-align: center; }
+.grown-up a {
+  display: inline-block;
+  padding: 10px 18px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-dim);
+  text-decoration: none;
+  border: 2px solid var(--card-edge);
+  border-radius: 999px;
+}
+.grown-up a:active { transform: translateY(1px); }
+@media print { .grown-up { display: none; } }
+
+/* --- who is using it ------------------------------------------------------
+   The picker wears the "closed" overlay's clothes for the same reason the
+   warm-up sums do: there should be exactly one way a full-screen message
+   looks. A household with one child never sees any of this. */
+.whoami-card { max-width: 640px; }
+.faces {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin: 24px 0 8px;
+}
+.face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 132px;
+  padding: 12px 6px;
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: 3px solid transparent;
+  border-radius: 20px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.face-pic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 104px;
+  height: 104px;
+  font-size: 52px;
+  line-height: 1;
+  border-radius: 24px;
+  /* The colour is the tile. A made picture covers it; until then the emoji
+     sits on it, which is a perfectly good face and means a profile works the
+     moment it is named rather than after a render. */
+  background: var(--face, #f7b32b);
+  overflow: hidden;
+}
+.face-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.face-name {
+  font-size: 18px;
+  font-weight: 800;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.face.is-me { border-color: var(--good); }
+.face.is-me .face-name { color: var(--good); }
+.whoami-note { margin-top: 14px !important; font-size: 16px !important; }
+
+/* The chip in the banner. Small, because it is a label first and a button
+   second - they are told who they are far more often than they swap. */
+.me-chip {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 45%;
+  min-height: 40px;
+  padding: 4px 12px 4px 6px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--card-edge);
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.me-face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 50%;
+  background: var(--face, #f7b32b);
+  overflow: hidden;
+  flex: none;
+}
+.me-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.me-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Their own face, in Settings. */
+.me-now { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.me-big {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+  font-size: 42px;
+  line-height: 1;
+  border-radius: 22px;
+  background: var(--face, #f7b32b);
+  overflow: hidden;
+  flex: none;
+}
+.me-big img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.me-what { flex: 1 1 200px; min-width: 0; }
+.me-what b { display: block; font-size: 19px; margin-bottom: 8px; }
+.me-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.me-buttons button, .me-emoji-picks button {
+  min-height: 44px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 999px;
+  touch-action: manipulation;
+}
+.me-emoji-picks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.me-emoji-picks button { font-size: 24px; padding: 0 10px; min-width: 52px; }
+.me-emoji-picks button.is-on { border-color: var(--good); background: var(--good); }
+
+/* The three questions. */
+.mewiz-body { padding: 0 4px; }
+.mewiz-step { margin: 0 0 22px; }
+.mewiz-step h3 { margin: 0 0 10px; font-size: 20px; }
+.mewiz-picks { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.mewiz-picks button {
+  min-height: 46px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 999px;
+  touch-action: manipulation;
+}
+.mewiz-picks button.is-on { color: var(--on-accent); background: var(--good); border-color: var(--good); }
+.mewiz-body input[type=text] {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 17px;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--card-edge);
+  border-radius: 14px;
+}
+.mewiz-preview {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  font-size: 16px;
+  font-style: italic;
+  color: var(--ink-dim);
+  background: var(--field);
+  border-radius: 14px;
+}
+@media (max-width: 560px) {
+  .face { width: 108px; }
+  .face-pic { width: 86px; height: 86px; font-size: 42px; }
+  .me-chip { font-size: 13px; padding: 3px 10px 3px 4px; }
+}
+
+/* --- changing a picture they already have ---------------------------------- */
+
+/* The change and outside sheets are the frame grabber's shape - a still, a
+   choice or two, a box and a Go - so almost everything is already styled. Two
+   things are not: the textarea, which those sheets never had, and the row of
+   example changes under it. */
+.change textarea, .outside textarea, .restyle textarea, .mask-words textarea {
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 17px;
+  color: var(--ink);
+  background: var(--field);
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  resize: none;
+}
+.change textarea:focus, .outside textarea:focus, .restyle textarea:focus,
+.mask-words textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+/* Six examples, so they can see what kind of sentence the box wants. They wrap
+   and each one is its own width, unlike the fixed three-across choices. */
+.idea-chips {
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.idea-chips .count-pick {
+  flex: 0 0 auto;
+  font-size: 15px;
+  padding: 10px 14px;
+}
+/* The side and amount pickers sit in a .when-row, which is built around a
+   slider, so they have to be told to take the space the slider would have had
+   - the same line the moving-sticker sheet needs. */
+.outside .when-row .choices { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
+/* Five sides wrap onto two lines on a phone, and a stretched "Down" alone on
+   the second one reads as a different kind of button. Each takes its own
+   width instead. */
+.outside #outside-sides .count-pick { flex: 0 0 auto; }
+
+/* "Turn it into..." is eight chips that wrap, which is `.idea-chips` already -
+   they only need to be the tappable size the rest of the app uses, since these
+   are the choice rather than an example of one, and to line up in the middle
+   so a short last row does not hang off the left. */
+.restyle .idea-chips { justify-content: center; }
+.restyle .idea-chips .count-pick { font-size: 16px; padding: 12px 16px; }
+
+/* Mask mode: the drawing pad with everything that means "a picture" taken
+   away - the colours, the stamps and the brush sizes. What is left is one
+   thick brush, the rubber, undo and "start again", which are the four things
+   that still mean something when what they are painting is a where. */
+.draw.masking .palette,
+.draw.masking .stamps,
+.draw.masking .brushes .brush { display: none; }
+.mask-words { padding: 0 4px; }
+.mask-words textarea { margin-top: 10px; }
+/* ...and the Go button stays on screen. The chips and the words box are
+   taller than a phone, so without this Go sat under the fold and the sheet
+   read as having no button. Sticky, not fixed: it rides up with the sheet's
+   own scrolling and never covers the last chip. */
+.sheet.change .voice-actions,
+.sheet.restyle .voice-actions,
+.sheet.outside .voice-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: 12px;
+  padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px));
+  background: inherit;
+}
+@media (max-width: 560px) {
+  .sheet.change .frame-shot img,
+  .sheet.restyle .frame-shot img,
+  .sheet.outside .frame-shot img { max-height: 26vh; }
+}
+
+/* --- the story maker -------------------------------------------------------
+   The trail is the card's whole navigation: five chips saying where they are,
+   which ones are behind them and which they have not reached. Tapping a done one
+   goes back to look at it again, which is why they are buttons and why the
+   ones ahead are disabled rather than hidden - the shape of the whole job
+   should be readable from the first step. */
+.story-trail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+}
+.story-trail li { flex: 1 1 auto; min-width: 0; }
+.story-trail .trail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 2px solid var(--line, rgba(255, 255, 255, 0.18));
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.story-trail .trail[disabled] { opacity: 0.45; }
+.story-trail .trail.done { color: var(--ink); border-color: var(--good, #5ac18e); }
+.story-trail .trail.is-on {
+  color: #1b1035;
+  background: var(--accent, #f7b32b);
+  border-color: var(--accent, #f7b32b);
+}
+.story-off, .story-say { margin: 0 0 12px; font-size: 17px; color: var(--ink-dim); }
+.story-off { color: var(--warn, #f7b32b); }
+.tickbox { display: flex; align-items: center; gap: 10px; font-size: 17px; }
+.tickbox input { width: 24px; height: 24px; }
+/* Below 560px the words on the chips are what does not fit: five of them plus
+   an emoji each is wider than a phone. The emoji alone still says which step
+   is which, and the line under the trail says it in words anyway. */
+@media (max-width: 560px) {
+  .story-trail .trail-word { display: none; }
+  .story-trail .trail { font-size: 20px; padding: 6px 4px; }
+}
+
+
+/* The deployment values on the parent page: four secret boxes under Alerts
+   and four plain ones under Settings. A hairline between the stacked ones
+   rather than a box each - the same reasoning as the gallery's shelves, where
+   four bordered rectangles read as a wall rather than as a list. */
+.parent .deploy + .deploy,
+.parent .secret {
+  margin-top: 14px;
+  border-top: 1px solid var(--line, rgba(255, 255, 255, 0.18));
+  padding-top: 12px;
+}
+.parent .deploy h4 { margin: 0 0 6px; }
+.parent .deploy [data-state],
+.parent .secret [data-state] { margin: 6px 0 0; }
+.parent .secret textarea { min-height: 3.2em; }

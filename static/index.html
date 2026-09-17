@@ -1,0 +1,1608 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b1035">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="My AI Factory">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>My AI Factory</title>
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css?v=2026-09-17m">
+<script>
+  // The project was renamed to Makery, and everything it remembers in this
+  // browser is keyed `makery:` now. Anything still under the old prefix -
+  // their colours, their language, the tab they were on, the chat so far - is
+  // carried across once, here, before a line of the app reads any of it.
+  // First, because the two reads below depend on it. It removes itself: after
+  // one load there is nothing left to find.
+  try {
+    ["localStorage", "sessionStorage"].forEach(function (which) {
+      var store = window[which];
+      Object.keys(store).forEach(function (key) {
+        if (key.indexOf("easy-iv-gen:") !== 0) return;
+        var moved = "makery:" + key.slice("easy-iv-gen:".length);
+        if (store.getItem(moved) === null) store.setItem(moved, store.getItem(key));
+        store.removeItem(key);
+      });
+    });
+  } catch (e) {}
+  // Their colours, before the first paint. app.js runs at the end of the body,
+  // which is late enough to show a flash of the wrong scheme on every load.
+  // The server is still the authority - /api/app corrects this if they chose
+  // on another device - but it agrees with this one nearly every time.
+  try {
+    var t = localStorage.getItem("makery:theme");
+    if (t) document.documentElement.dataset.theme = t;
+  } catch (e) {}
+  // And their language, for the same reason: i18n.js reads the cookie, which is
+  // the authority, but the <html lang> below has to be right before the first
+  // paint too - a screen reader and Safari's own translate prompt both read
+  // it. /api/app corrects both if they chose on another device. The seven are
+  // spelled out rather than matched as two letters, so a stale or mangled
+  // cookie leaves the attribute alone instead of setting it to nonsense.
+  try {
+    var m = / *lang=(en|fr|de|es|it|nl|pt)\b/.exec("; " + document.cookie);
+    var l = m ? m[1] : (localStorage.getItem("makery:lang") || "");
+    if (/^(en|fr|de|es|it|nl|pt)$/.test(l)) document.documentElement.lang = l;
+  } catch (e) {}
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="banner">
+    <img src="banner.png" alt="" width="1536" height="384">
+    <!-- Neutral until /api/app says otherwise, so no child's name is baked
+         into the markup. app.js fills both this and document.title. -->
+    <h1 id="app-title">My <span>AI Factory</span></h1>
+    <!-- Only when there is more than one person: a household with one child
+         should never see a trace of any of this. -->
+    <button type="button" class="me-chip" id="me-chip" hidden
+      data-i18n-attr="title:That's me - tap to swap"
+      title="That's me - tap to swap">
+      <span class="me-face" id="me-chip-face">🦊</span>
+      <span class="me-name" id="me-chip-name"></span>
+    </button>
+  </div>
+  <div class="nowbar" id="nowbar" hidden>
+    <button type="button" class="nowbar-main" id="nowbar-main"
+      aria-haspopup="dialog" aria-expanded="false" aria-controls="nowsheet"
+      data-i18n-attr="aria-label:Tap to see what's happening"
+      aria-label="Tap to see what's happening">
+      <span class="nowbar-dot" aria-hidden="true"></span>
+      <span class="nowbar-text" id="nowbar-text"></span>
+      <span class="nowbar-more" aria-hidden="true">&rsaquo;</span>
+    </button>
+    <button type="button" class="nowbar-go" id="nowbar-go" hidden
+      data-i18n="Show me">Show me</button>
+  </div>
+  <!-- Only in the last half hour before the timetable shuts. The overlay
+       arriving with no warning, in the middle of typing, is the thing this
+       exists to prevent. -->
+  <div class="nowbar closing" id="closing" hidden>
+    <span aria-hidden="true">⏰</span>
+    <span class="nowbar-text" id="closing-text"></span>
+  </div>
+</header>
+
+<div class="tabs-sentinel" id="tabs-sentinel" aria-hidden="true"></div>
+<nav class="tabs" id="tabs" role="tablist" aria-label="What would you like to do?"
+  data-i18n-attr="aria-label:What would you like to do?">
+  <button type="button" class="tab is-on" data-tab="image" role="tab" aria-selected="true">
+    <span class="tab-emoji" aria-hidden="true">🎨</span><span class="tab-word" data-i18n="Picture">Picture</span>
+  </button>
+  <button type="button" class="tab" data-tab="video" role="tab" aria-selected="false">
+    <span class="tab-emoji" aria-hidden="true">🎬</span><span class="tab-word" data-i18n="Video">Video</span>
+  </button>
+  <button type="button" class="tab" data-tab="comic" role="tab" aria-selected="false">
+    <span class="tab-emoji" aria-hidden="true">📖</span><span class="tab-word" data-i18n="Comic">Comic</span>
+  </button>
+  <button type="button" class="tab" data-tab="music" role="tab" aria-selected="false" hidden>
+    <span class="tab-emoji" aria-hidden="true">🎵</span><span class="tab-word" data-i18n="Music">Music</span>
+  </button>
+  <button type="button" class="tab" data-tab="story" role="tab" aria-selected="false" hidden>
+    <span class="tab-emoji" aria-hidden="true">🎭</span><span class="tab-word" data-i18n="Story">Story</span>
+  </button>
+  <button type="button" class="tab" data-tab="chat" role="tab" aria-selected="false">
+    <span class="tab-emoji" aria-hidden="true">💬</span><span class="tab-word" data-i18n="Chat">Chat</span>
+  </button>
+  <button type="button" class="tab" data-tab="mine" role="tab" aria-selected="false">
+    <span class="tab-emoji" aria-hidden="true">🖼️</span><span class="tab-word" data-i18n="Gallery">Gallery</span>
+  </button>
+  <button type="button" class="tab" data-tab="banner" role="tab" aria-selected="false">
+    <span class="tab-emoji" aria-hidden="true">⚙️</span><span class="tab-word" data-i18n="Settings">Settings</span>
+  </button>
+</nav>
+
+<main>
+
+  <section class="card mine" id="card-mine" hidden>
+    <h2><span class="emoji" aria-hidden="true">🖼️</span> <span data-i18n="Gallery">Gallery</span></h2>
+    <p class="mine-note" data-i18n="Everything you've made is saved here.">Everything you've made is saved here.</p>
+    <p class="mine-empty" hidden data-i18n="Nothing here yet! Make a picture, a video or a comic and it'll turn up here.">Nothing here yet! Make a picture, a video or a comic and it'll turn up here.</p>
+
+    <!-- Their cast, on the page rather than behind a button. Who they have made
+         was the one thing this card said nothing about; a row of faces says it
+         without being asked. Hidden when there are none, like any empty shelf. -->
+    <div class="shelf cast-shelf" hidden>
+      <h3><span data-i18n="🧑‍🎤 My characters">🧑‍🎤 My characters</span> <span class="count"></span></h3>
+      <div class="strip cast-strip"></div>
+    </div>
+
+    <!-- Groups or everything, and what order. The same box and the same rows
+         as the choices on a maker card, because it is the same kind of
+         question. -->
+    <div class="settings">
+      <div class="setting">
+        <span class="setting-label" data-i18n="Show">Show</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="How to show your gallery"
+            data-i18n-attr="aria-label:How to show your gallery">
+            <button type="button" class="view-pick is-on" data-view="all" role="radio" aria-checked="true">
+              <span aria-hidden="true">🌈</span> <span data-i18n="Everything">Everything</span>
+            </button>
+            <button type="button" class="view-pick" data-view="groups" role="radio" aria-checked="false">
+              <span aria-hidden="true">🗂️</span> <span data-i18n="In groups">In groups</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Only means anything in one long list: the groups have an order of
+           their own. -->
+      <div class="setting mine-order" hidden>
+        <span class="setting-label" data-i18n="Order">Order</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="What order to show them in"
+            data-i18n-attr="aria-label:What order to show them in">
+            <button type="button" class="sort-pick is-on" data-sort="new" role="radio" aria-checked="true" data-i18n="Newest">Newest</button>
+            <button type="button" class="sort-pick" data-sort="old" role="radio" aria-checked="false" data-i18n="Oldest">Oldest</button>
+            <button type="button" class="sort-pick" data-sort="fav" role="radio" aria-checked="false" data-i18n="⭐ Favourites">⭐ Favourites</button>
+            <button type="button" class="sort-pick" data-sort="kind" role="radio" aria-checked="false" data-i18n="By kind">By kind</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mine-tools">
+      <div class="find">
+        <input id="mine-find" type="search" enterkeyhint="search" autocomplete="off"
+          placeholder="🔎 Find something you made" aria-label="Search your gallery"
+          data-i18n-attr="placeholder:🔎 Find something you made;aria-label:Search your gallery">
+        <button class="find-clear" type="button" id="mine-find-clear" aria-label="Clear the search" hidden
+          data-i18n-attr="aria-label:Clear the search">✕</button>
+      </div>
+      <button class="sheet-select mine-select" type="button" data-action="toggle-select" data-i18n="Choose">Choose</button>
+    </div>
+    <div class="albums" id="albums" hidden></div>
+
+    <div class="shelf" data-media="favourite" hidden>
+      <h3><span data-i18n="⭐ Favourites">⭐ Favourites</span> <span class="count"></span></h3>
+      <div class="strip"></div>
+    </div>
+    <!-- Only ever shown when there is more than one profile; with one child
+         the script leaves it hidden and the page looks as it always did. -->
+    <div class="shelf" data-media="family" hidden>
+      <h3><span data-i18n="👨‍👩‍👧 Family">👨‍👩‍👧 Family</span> <span class="count"></span></h3>
+      <div class="strip"></div>
+    </div>
+    <div class="shelf" data-media="image" hidden>
+      <h3><span data-i18n="🎨 Pictures">🎨 Pictures</span> <span class="count"></span></h3>
+      <div class="strip"></div>
+    </div>
+    <div class="shelf" data-media="comic" hidden>
+      <h3><span data-i18n="📖 Comics">📖 Comics</span> <span class="count"></span></h3>
+      <div class="strip"></div>
+    </div>
+    <div class="shelf" data-media="panel" hidden>
+      <h3><span data-i18n="🧩 Comic pictures">🧩 Comic pictures</span> <span class="count"></span></h3>
+      <div class="strip"></div>
+    </div>
+    <div class="shelf" data-media="sticker" hidden>
+      <h3><span data-i18n="✂️ Stickers">✂️ Stickers</span> <span class="count"></span></h3>
+      <div class="strip"></div>
+    </div>
+    <div class="shelf" data-media="upload" hidden>
+      <h3><span data-i18n="📷 Photos & drawings">📷 Photos &amp; drawings</span> <span class="count"></span></h3>
+      <div class="strip"></div>
+    </div>
+    <div class="shelf" data-media="video" hidden>
+      <h3><span data-i18n="🎬 Videos">🎬 Videos</span> <span class="count"></span></h3>
+      <div class="strip"></div>
+    </div>
+    <div class="shelf" data-media="music" hidden>
+      <h3><span data-i18n="🎵 Songs">🎵 Songs</span> <span class="count"></span></h3>
+      <div class="strip"></div>
+    </div>
+
+    <!-- The other view: one grid, newest first, every tile saying what kind of
+         thing it is. -->
+    <div class="grid mine-grid" hidden></div>
+    <p class="sheet-empty mine-none" hidden data-i18n="Nothing matches that. Try another word!">Nothing matches that. Try another word!</p>
+
+    <details class="trash" hidden>
+      <summary><span data-i18n="🗑️ Recently deleted">🗑️ Recently deleted</span> <span class="count"></span></summary>
+      <p class="trash-note"></p>
+      <div class="grid trash-grid"></div>
+    </details>
+
+    <!-- Fixed to the bottom of the screen while they are choosing several, so it
+         is in the same place whatever is scrolled. Inside the card, which is
+         what takes it away when they go to another tab. -->
+    <div class="picked-bar" hidden>
+      <p class="picked-count" data-i18n="Nothing chosen yet">Nothing chosen yet</p>
+      <div class="picked-row">
+        <button class="picked-all" type="button" data-action="select-all" data-i18n="Choose all">Choose all</button>
+        <button class="picked-join" type="button" data-action="join-picked" hidden data-i18n="🎬 Join into a film">🎬 Join into a film</button>
+        <button class="picked-compare" type="button" data-action="compare-picked" hidden data-i18n="🔍 Compare them">🔍 Compare them</button>
+        <button class="picked-album" type="button" data-action="tag-picked" data-i18n="🏷️ Add a tag">🏷️ Add a tag</button>
+        <a class="picked-save" data-action="save-picked" download data-i18n="⬇︎ Save">⬇︎ Save</a>
+        <button class="picked-delete" type="button" data-action="delete-picked" data-i18n="🗑️ Delete">🗑️ Delete</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" data-kind="image" id="card-image">
+    <h2><span class="emoji" aria-hidden="true">🎨</span> <span data-i18n="Make a picture">Make a picture</span><button class="card-reset" type="button" data-action="reset-card"
+    data-i18n="↺ Start again" data-i18n-attr="title:Clear everything on this card and start again"
+    title="Clear everything on this card and start again">↺ Start again</button></h2>
+
+    <!-- The idea first: typing is the one thing they always do, so the box is
+         the first thing on the card and every tool that helps with the words
+         sits in one row directly under it. -->
+    <div class="idea">
+      <label class="sr-only" for="prompt-image" data-i18n="What should the picture be?">What should the picture be?</label>
+      <div class="field"><textarea id="prompt-image" rows="3" enterkeyhint="done"
+        placeholder="A fluffy dragon eating pancakes on the moon"
+        data-i18n-attr="placeholder:A fluffy dragon eating pancakes on the moon"></textarea>
+        <button class="clear-text" type="button" data-action="clear-text"
+          aria-label="Clear what you typed" data-i18n-attr="aria-label:Clear what you typed"
+          hidden>✕</button></div>
+      <div class="tools">
+        <button class="helper" type="button" data-action="script" data-i18n="✨ Help me write it">✨ Help me write it</button>
+        <button class="surprise" type="button" data-action="surprise" data-i18n="🎉 Surprise me">🎉 Surprise me</button>
+        <!-- Hidden: what it did was never clear from the label - it re-rolled
+             the dropdowns on an old idea, which reads as "surprise me" with
+             extra steps. The route and the handler still work. -->
+        <button class="remix" type="button" data-action="remix" hidden data-i18n="🎲 Mix it up">🎲 Mix it up</button>
+      </div>
+      <p class="helper-msg" hidden></p>
+      <!-- A photo is a thing to make something out of, and finding the photo
+           button on the Video card first was a long way round. This one puts
+           it straight in their stuff and opens it, where every button that can
+           do something with a picture already lives. -->
+      <div class="source-buttons photo-start">
+        <label class="photo-btn">
+          <span class="photo-label" data-i18n="📷 Start from a photo">📷 Start from a photo</span>
+          <input type="file" accept="image/*" class="photo-input">
+        </label>
+        <!-- The same door, for a picture they already have. They can open one
+             from the Gallery page too, but the thought "start a picture from
+             a picture" happens here, on the card, not two taps away. -->
+        <button class="pick-btn" type="button" data-action="pick-start"
+          data-i18n="🖼️ Pick one from my gallery">🖼️ Pick one from my gallery</button>
+      </div>
+      <details class="history" hidden>
+        <summary data-i18n="📜 Things I've asked for before">📜 Things I've asked for before</summary>
+        <div class="history-list"></div>
+      </details>
+    </div>
+
+    <!-- Every choice in one box, one labelled row each. -->
+    <div class="settings">
+      <div class="setting cast" hidden>
+        <span class="setting-label" data-i18n="Who's in it?">Who's in it?</span>
+        <div class="setting-body">
+          <div class="cast-row"></div>
+          <button class="cast-see" type="button" data-action="see-character" hidden></button>
+        </div>
+      </div>
+      <div class="setting whatkind">
+        <span class="setting-label" data-i18n="Make">Make</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="What kind of picture" data-i18n-attr="aria-label:What kind of picture">
+            <button type="button" class="kind-pick is-on" data-cutout="0" role="radio" aria-checked="true">
+              <span aria-hidden="true">🏞️</span> <span data-i18n="A picture">A picture</span>
+            </button>
+            <button type="button" class="kind-pick" data-cutout="1" role="radio" aria-checked="false">
+              <span aria-hidden="true">🧑‍🎤</span> <span data-i18n="A character">A character</span>
+            </button>
+          </div>
+          <p class="len-note kind-note" hidden
+            data-i18n="Drawn on its own with nothing behind it, so you can cut it out as a sticker or keep them as a character.">Drawn
+            on its own with nothing behind it, so you can cut it out as a
+            sticker or keep them as a character.</p>
+        </div>
+      </div>
+      <div class="setting">
+        <span class="setting-label" data-i18n="Shape">Shape</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="Picture shape" data-i18n-attr="aria-label:Picture shape">
+            <button type="button" class="orient is-on" data-orientation="landscape" role="radio" aria-checked="true">
+              <span class="box land" aria-hidden="true"></span> <span data-i18n="Landscape">Landscape</span>
+            </button>
+            <button type="button" class="orient" data-orientation="portrait" role="radio" aria-checked="false">
+              <span class="box port" aria-hidden="true"></span> <span data-i18n="Portrait">Portrait</span>
+            </button>
+            <button type="button" class="orient" data-orientation="square" role="radio" aria-checked="false">
+              <span class="box sq" aria-hidden="true"></span> <span data-i18n="Square">Square</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="setting howmany">
+        <span class="setting-label" data-i18n="How many">How many</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="How many pictures" data-i18n-attr="aria-label:How many pictures">
+            <button type="button" class="count-pick is-on" data-count="1" role="radio" aria-checked="true">
+              <span aria-hidden="true">🖼️</span> <span data-i18n="Just one">Just one</span>
+            </button>
+            <button type="button" class="count-pick" data-count="4" role="radio" aria-checked="false">
+              <span aria-hidden="true">🎛️</span> <span data-i18n="Four to pick from">Four to pick from</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Always open. As a collapsed bar this was the one thing on the card
+           they never found, and it is the set of choices that changes a picture
+           most. Still class "extras" so the script can hide the whole row if
+           /api/styles is down. -->
+      <div class="setting extras">
+        <span class="setting-label" data-i18n="Look">Look</span>
+        <div class="setting-body">
+          <div class="dropdowns"></div>
+          <button class="reset-styles" type="button" data-action="reset-styles" data-i18n="Clear these">Clear these</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="allowance" hidden></p>
+    <p class="eta-note" hidden></p>
+
+    <div class="buttons">
+      <button class="go" type="button" data-action="go" data-i18n="Make my picture">Make my picture</button>
+      <button class="stop" type="button" data-action="stop" hidden data-i18n="Stop">Stop</button>
+    </div>
+
+    <div class="status" hidden>
+      <div class="bar"><div class="fill"></div><span class="pct"></span></div>
+      <p class="msg"></p>
+      <div class="status-line">
+        <p class="timing" hidden></p>
+        <p class="sys" hidden></p>
+      </div>
+    </div>
+    <div class="result" hidden></div>
+  </section>
+
+  <section class="card" data-kind="video" id="card-video" data-mode="t2v">
+    <h2><span class="emoji" aria-hidden="true">🎬</span> <span data-i18n="Make a video">Make a video</span><button class="card-reset" type="button" data-action="reset-card"
+    data-i18n="↺ Start again" data-i18n-attr="title:Clear everything on this card and start again"
+    title="Clear everything on this card and start again">↺ Start again</button></h2>
+
+    <!-- The one choice that changes what the rest of the card means, so it
+         stays above the idea rather than in the box with the other settings. -->
+    <div class="settings mode">
+      <div class="setting">
+        <span class="setting-label" data-i18n="Start from">Start from</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="What to start the video from" data-i18n-attr="aria-label:What to start the video from">
+            <button type="button" class="opt is-on" data-mode="t2v" role="radio" aria-checked="true"
+              data-i18n="✏️ Words">✏️ Words</button>
+            <button type="button" class="opt" data-mode="i2v" role="radio" aria-checked="false"
+              data-i18n="🖼️ A picture">🖼️ A picture</button>
+            <button type="button" class="opt" data-mode="flf" role="radio" aria-checked="false"
+              data-i18n="🎞️ Two pictures">🎞️ Two pictures</button>
+            <button type="button" class="opt" data-mode="story" role="radio" aria-checked="false"
+              data-i18n="📽️ A little film">📽️ A little film</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="source" hidden>
+      <p class="source-empty"
+        data-i18n="Make a picture up above and tap <strong>Animate this</strong>, or use a photo from your iPad.">
+        Make a picture up above and tap <strong>Animate this</strong>,
+        or use a photo from your iPad.
+      </p>
+      <div class="source-picked" hidden>
+        <img alt="The picture you picked" data-i18n-attr="alt:The picture you picked">
+        <div>
+          <p class="source-label" data-i18n="This picture is ready to animate!">This picture is ready to animate!</p>
+          <button class="clear" type="button" data-action="clear-source" data-i18n="Use a different one">Use a different one</button>
+        </div>
+      </div>
+      <div class="source-buttons">
+        <label class="photo-btn">
+          <span class="photo-label" data-i18n="📷 Take or choose a photo">📷 Take or choose a photo</span>
+          <input type="file" accept="image/*" class="photo-input">
+        </label>
+        <button class="draw-btn" type="button" data-action="open-draw" data-i18n="✏️ Draw one">✏️ Draw one</button>
+      </div>
+    </div>
+
+    <!-- First picture, last picture: the video starts on one and ends on the
+         other, and they write what happens in between. A video in the first
+         slot means its last frame; in the last slot, its first - so two of
+         their clips can be bridged. -->
+    <div class="between" hidden>
+      <p class="source-empty" data-i18n="Pick where the video starts and where it ends. The middle gets made up.">Pick where the video starts and where it ends. The middle gets made up.</p>
+      <div class="slots">
+        <div class="slot" data-slot="first">
+          <span class="slot-label" data-i18n="Starts on">Starts on</span>
+          <img class="slot-img" alt="" hidden>
+          <button class="slot-pick" type="button" data-action="pick-slot" data-slot="first"
+            data-i18n="🖼️ Pick from the gallery">🖼️ Pick from the gallery</button>
+          <button class="slot-clear" type="button" data-action="clear-slot" data-slot="first" hidden
+            data-i18n="Use a different one">Use a different one</button>
+        </div>
+        <span class="slot-arrow" aria-hidden="true">→</span>
+        <div class="slot" data-slot="last">
+          <span class="slot-label" data-i18n="Ends on">Ends on</span>
+          <img class="slot-img" alt="" hidden>
+          <button class="slot-pick" type="button" data-action="pick-slot" data-slot="last"
+            data-i18n="🖼️ Pick from the gallery">🖼️ Pick from the gallery</button>
+          <button class="slot-clear" type="button" data-action="clear-slot" data-slot="last" hidden
+            data-i18n="Use a different one">Use a different one</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="idea">
+      <label class="sr-only" for="prompt-video" data-i18n="What should the video be?">What should the video be?</label>
+      <div class="field"><textarea id="prompt-video" rows="4" enterkeyhint="done"
+        placeholder="A puppy surfing a giant wave at sunset"
+        data-i18n-attr="placeholder:A puppy surfing a giant wave at sunset"></textarea>
+        <button class="clear-text" type="button" data-action="clear-text"
+          aria-label="Clear what you typed" data-i18n-attr="aria-label:Clear what you typed"
+          hidden>✕</button></div>
+      <div class="tools">
+        <button class="helper" type="button" data-action="script" data-i18n="✨ Help me write it">✨ Help me write it</button>
+        <button class="surprise" type="button" data-action="surprise" data-i18n="🎉 Surprise me">🎉 Surprise me</button>
+        <!-- Hidden: what it did was never clear from the label - it re-rolled
+             the dropdowns on an old idea, which reads as "surprise me" with
+             extra steps. The route and the handler still work. -->
+        <button class="remix" type="button" data-action="remix" hidden data-i18n="🎲 Mix it up">🎲 Mix it up</button>
+      </div>
+      <p class="helper-msg" hidden></p>
+      <details class="history" hidden>
+        <summary data-i18n="📜 Things I've asked for before">📜 Things I've asked for before</summary>
+        <div class="history-list"></div>
+      </details>
+
+      <label class="say">
+        <span class="say-label"><span data-i18n="🗣️ What should they say?">🗣️ What should they say?</span> <em data-i18n="(you can leave this empty)">(you can leave this empty)</em></span>
+        <span class="field say-field">
+          <input class="say-input" type="text" maxlength="120" enterkeyhint="done"
+            placeholder="Look at the Earth from up here!"
+            data-i18n-attr="placeholder:Look at the Earth from up here!">
+          <button class="clear-say" type="button" data-action="clear-say"
+            aria-label="Clear what they say" data-i18n-attr="aria-label:Clear what they say"
+            hidden>✕</button>
+        </span>
+      </label>
+      <!-- Was a whole collapsible "your videos have sound" box between the
+           settings. The one thing they need to know fits on a line. -->
+      <p class="hint" data-i18n="🔊 Videos have sound — they'll say this out loud, so keep it short.">🔊 Videos have sound — they'll say this out loud, so keep it short.</p>
+    </div>
+
+    <div class="settings">
+      <div class="setting cast" hidden>
+        <span class="setting-label" data-i18n="Who's in it?">Who's in it?</span>
+        <div class="setting-body">
+          <div class="cast-row"></div>
+          <button class="cast-see" type="button" data-action="see-character" hidden></button>
+        </div>
+      </div>
+      <div class="setting">
+        <span class="setting-label" data-i18n="Shape">Shape</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="Video shape" data-i18n-attr="aria-label:Video shape">
+            <button type="button" class="orient is-on" data-orientation="landscape" role="radio" aria-checked="true">
+              <span class="box land" aria-hidden="true"></span> <span data-i18n="Landscape">Landscape</span>
+            </button>
+            <button type="button" class="orient" data-orientation="portrait" role="radio" aria-checked="false">
+              <span class="box port" aria-hidden="true"></span> <span data-i18n="Portrait">Portrait</span>
+            </button>
+            <button type="button" class="orient" data-orientation="square" role="radio" aria-checked="false">
+              <span class="box sq" aria-hidden="true"></span> <span data-i18n="Square">Square</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="setting quality">
+        <span class="setting-label" data-i18n="Quality">Quality</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="Video quality" data-i18n-attr="aria-label:Video quality">
+            <button type="button" class="qual-pick" data-quality="quick" role="radio" aria-checked="false" data-i18n="⚡ Quick">⚡ Quick</button>
+            <button type="button" class="qual-pick is-on" data-quality="normal" role="radio" aria-checked="true" data-i18n="👍 Normal">👍 Normal</button>
+            <button type="button" class="qual-pick" data-quality="sharp" role="radio" aria-checked="false" data-i18n="✨ Sharper">✨ Sharper</button>
+          </div>
+          <p class="len-note qual-note"><span data-i18n="Sharper means more detail, but it takes a good deal longer to make, and the longest a sharper video can be is">Sharper
+            means more detail, but it takes a good deal longer to make, and the
+            longest a sharper video can be is</span> <span class="qual-max">10</span> <span data-i18n="seconds.">seconds.</span></p>
+        </div>
+      </div>
+      <div class="setting length">
+        <span class="setting-label" data-i18n="How long">How long</span>
+        <div class="setting-body">
+          <div class="slider-row">
+            <span class="slider-end">5s</span>
+            <input class="length-slider" type="range" min="5" max="15" step="1" value="5"
+              aria-label="Video length in seconds" aria-valuetext="5 seconds"
+              data-i18n-attr="aria-label:Video length in seconds">
+            <span class="slider-end">15s</span>
+            <span class="length-readout"><output class="length-out">5</output>s</span>
+          </div>
+          <p class="len-note" data-i18n="Longer videos take longer to make.">Longer videos take longer to make.</p>
+        </div>
+      </div>
+      <div class="setting parts" hidden>
+        <span class="setting-label" data-i18n="How many parts">How many parts</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="How many parts" data-i18n-attr="aria-label:How many parts">
+            <button type="button" class="part-pick" data-parts="2" role="radio" aria-checked="false" data-i18n="2 parts">2 parts</button>
+            <button type="button" class="part-pick is-on" data-parts="3" role="radio" aria-checked="true" data-i18n="3 parts">3 parts</button>
+            <button type="button" class="part-pick" data-parts="4" role="radio" aria-checked="false" data-i18n="4 parts">4 parts</button>
+          </div>
+          <p class="len-note" data-i18n="Each part carries on from the last one, then they're joined into one film. It takes a while, and it uses up one video for each part.">Each
+            part carries on from the last one, then they're joined into one
+            film. It takes a while, and it uses up one video for each part.</p>
+        </div>
+      </div>
+      <!-- Always open. As a collapsed bar this was the one thing on the card
+           they never found, and it is the set of choices that changes a picture
+           most. Still class "extras" so the script can hide the whole row if
+           /api/styles is down. -->
+      <div class="setting extras">
+        <span class="setting-label" data-i18n="Look and sound">Look and sound</span>
+        <div class="setting-body">
+          <div class="dropdowns"></div>
+          <!-- A sound effect chosen now goes into the video the moment it is
+               rendered. They used to have to find the video afterwards. -->
+          <div class="effect-row">
+            <label>
+              <span data-i18n="🔊 Add a sound">🔊 Add a sound</span>
+              <select class="effect-pick"><option value="" data-i18n="None">None</option></select>
+            </label>
+            <label hidden>
+              <span data-i18n="When?">When?</span>
+              <select class="effect-when">
+                <option value="start" data-i18n="At the start">At the start</option>
+                <option value="middle" data-i18n="In the middle">In the middle</option>
+                <option value="end" data-i18n="At the end">At the end</option>
+              </select>
+            </label>
+          </div>
+          <button class="reset-styles" type="button" data-action="reset-styles" data-i18n="Clear these">Clear these</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="allowance" hidden></p>
+    <p class="eta-note" hidden></p>
+
+    <div class="buttons">
+      <button class="go" type="button" data-action="go" data-i18n="Make my video">Make my video</button>
+      <button class="stop" type="button" data-action="stop" hidden data-i18n="Stop">Stop</button>
+    </div>
+
+    <div class="status" hidden>
+      <div class="bar"><div class="fill"></div><span class="pct"></span></div>
+      <p class="msg"></p>
+      <div class="status-line">
+        <p class="timing" hidden></p>
+        <p class="sys" hidden></p>
+      </div>
+    </div>
+    <div class="result" hidden></div>
+  </section>
+
+  <section class="card" data-kind="comic" id="card-comic">
+    <h2><span class="emoji" aria-hidden="true">📖</span> <span data-i18n="Make a comic">Make a comic</span><button class="card-reset" type="button" data-action="reset-card"
+    data-i18n="↺ Start again" data-i18n-attr="title:Clear everything on this card and start again"
+    title="Clear everything on this card and start again">↺ Start again</button></h2>
+    <p class="mine-note" data-i18n="Tell a story and it gets drawn as a comic strip you can print.">Tell a story and it gets drawn as a comic strip you can print.</p>
+
+    <div class="idea">
+      <label class="sr-only" for="prompt-comic" data-i18n="What's your story?">What's your story?</label>
+      <div class="field"><textarea id="prompt-comic" rows="3" enterkeyhint="done"
+        placeholder="A hedgehog who wants to learn to swim"
+        data-i18n-attr="placeholder:A hedgehog who wants to learn to swim"></textarea>
+        <button class="clear-text" type="button" data-action="clear-text"
+          aria-label="Clear what you typed" data-i18n-attr="aria-label:Clear what you typed"
+          hidden>✕</button></div>
+      <div class="tools">
+        <button class="helper" type="button" data-action="script" data-i18n="✨ Help me write it">✨ Help me write it</button>
+        <button class="surprise" type="button" data-action="surprise" data-i18n="🎉 Surprise me">🎉 Surprise me</button>
+        <!-- Hidden: what it did was never clear from the label - it re-rolled
+             the dropdowns on an old idea, which reads as "surprise me" with
+             extra steps. The route and the handler still work. -->
+        <button class="remix" type="button" data-action="remix" hidden data-i18n="🎲 Mix it up">🎲 Mix it up</button>
+      </div>
+      <p class="helper-msg" hidden></p>
+      <details class="history" hidden>
+        <summary data-i18n="📜 Things I've asked for before">📜 Things I've asked for before</summary>
+        <div class="history-list"></div>
+      </details>
+    </div>
+
+    <div class="settings">
+      <div class="setting cast" hidden>
+        <span class="setting-label" data-i18n="Who's in it?">Who's in it?</span>
+        <div class="setting-body">
+          <div class="cast-row"></div>
+          <button class="cast-see" type="button" data-action="see-character" hidden></button>
+        </div>
+      </div>
+      <div class="setting howmany">
+        <span class="setting-label" data-i18n="How many">How many</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="How many panels" data-i18n-attr="aria-label:How many panels">
+            <button type="button" class="panels" data-panels="3" role="radio" aria-checked="false" data-i18n="3 pictures">3 pictures</button>
+            <button type="button" class="panels is-on" data-panels="4" role="radio" aria-checked="true" data-i18n="4 pictures">4 pictures</button>
+            <button type="button" class="panels" data-panels="6" role="radio" aria-checked="false" data-i18n="6 pictures">6 pictures</button>
+          </div>
+        </div>
+      </div>
+      <!-- Always open. As a collapsed bar this was the one thing on the card
+           they never found, and it is the set of choices that changes a picture
+           most. Still class "extras" so the script can hide the whole row if
+           /api/styles is down. -->
+      <div class="setting extras">
+        <span class="setting-label" data-i18n="Look">Look</span>
+        <div class="setting-body">
+          <div class="dropdowns"></div>
+          <button class="reset-styles" type="button" data-action="reset-styles" data-i18n="Clear these">Clear these</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="allowance" hidden></p>
+    <p class="eta-note" hidden></p>
+
+    <div class="buttons">
+      <button class="go" type="button" data-action="go" data-i18n="Make my comic">Make my comic</button>
+      <button class="stop" type="button" data-action="stop" hidden data-i18n="Stop">Stop</button>
+    </div>
+
+    <div class="status" hidden>
+      <div class="bar"><div class="fill"></div><span class="pct"></span></div>
+      <p class="msg"></p>
+      <div class="status-line">
+        <p class="timing" hidden></p>
+        <p class="sys" hidden></p>
+      </div>
+    </div>
+    <div class="result" hidden></div>
+  </section>
+
+  <!-- data-kind="banner" so it plugs straight into the same card machinery as
+       the other three: idea box, Go, progress, result. What it makes is an
+       ordinary picture in an unusual shape - it counts the same and lands in
+       their gallery like the rest - and "Put it at the top" is what makes it
+       the banner. -->
+  <section class="card" data-kind="banner" id="card-banner" hidden>
+    <h2><span class="emoji" aria-hidden="true">⚙️</span> <span data-i18n="Settings">Settings</span><button class="card-reset" type="button" data-action="reset-card"
+    data-i18n="↺ Start again" data-i18n-attr="title:Clear everything on this card and start again"
+    title="Clear everything on this card and start again">↺ Start again</button></h2>
+
+    <div class="setting me-row" id="me-row" hidden>
+      <span class="setting-label" data-i18n="You">You</span>
+      <div class="setting-body">
+        <div class="me-now">
+          <span class="me-big" id="me-big">🦊</span>
+          <div class="me-what">
+            <b id="me-who"></b>
+            <div class="me-buttons">
+              <button type="button" data-action="open-mewiz" data-i18n="🪄 Make a picture of me">🪄 Make a picture of me</button>
+              <button type="button" data-action="me-emoji" data-i18n="😃 Pick a face instead">😃 Pick a face instead</button>
+              <button type="button" data-action="me-clear" id="me-clear" hidden data-i18n="↩️ Back to the face">↩️ Back to the face</button>
+            </div>
+          </div>
+        </div>
+        <div class="me-emoji-picks" id="me-emoji-picks" hidden role="radiogroup" aria-label="Pick a face" data-i18n-attr="aria-label:Pick a face"></div>
+      </div>
+    </div>
+
+    <div class="setting colours">
+      <span class="setting-label" data-i18n="Colours">Colours</span>
+      <div class="setting-body">
+        <div class="theme-picks" id="theme-picks" role="radiogroup" aria-label="Colours" data-i18n-attr="aria-label:Colours"></div>
+      </div>
+    </div>
+
+    <!-- Whoever is at the screen chooses; it lives in a cookie and not in a
+         profile, and there is nothing about it on the parent page. Picking one
+         reloads, the way picking a profile does: every string on the page
+         belongs to the language that was picked. -->
+    <div class="setting language">
+      <span class="setting-label" data-i18n="Language">Language</span>
+      <div class="setting-body">
+        <div class="theme-picks lang-picks" id="lang-picks" role="radiogroup"
+          aria-label="Which language" data-i18n-attr="aria-label:Which language"></div>
+      </div>
+    </div>
+
+    <div class="setting banner-now">
+      <span class="setting-label" data-i18n="The top of your page">The top of your page</span>
+      <div class="setting-body">
+        <img class="banner-preview" id="banner-preview" src="banner.png" alt="What is across the top of your page now"
+          data-i18n-attr="alt:What is across the top of your page now">
+        <button class="banner-reset" type="button" data-action="reset-banner" hidden data-i18n="↩️ Put the first one back">↩️ Put the first one back</button>
+        <p class="len-note" id="banner-off" hidden
+          data-i18n="Making new ones is switched off right now, but you can still use any picture from <strong>Gallery</strong> — open one and tap <strong>Put it at the top</strong>.">Making
+          new ones is switched off right now, but you can still use any picture
+          from <strong>Gallery</strong> — open one and tap <strong>Put it at
+          the top</strong>.</p>
+      </div>
+    </div>
+
+    <div class="idea">
+      <label class="sr-only" for="prompt-banner" data-i18n="What should the top of your page look like?">What should the top of your page look like?</label>
+      <div class="field"><textarea id="prompt-banner" rows="2" enterkeyhint="done"
+        placeholder="A row of hot air balloons over a green valley"
+        data-i18n-attr="placeholder:A row of hot air balloons over a green valley"></textarea>
+        <button class="clear-text" type="button" data-action="clear-text"
+          aria-label="Clear what you typed" data-i18n-attr="aria-label:Clear what you typed"
+          hidden>✕</button></div>
+      <div class="tools">
+        <button class="surprise" type="button" data-action="surprise" data-i18n="🎉 Surprise me">🎉 Surprise me</button>
+      </div>
+      <p class="helper-msg" hidden></p>
+      <p class="len-note" data-i18n="It's a long thin strip, so wide things work best — a row of something, a view, a pattern. Your name goes on top of it, so leave the middle fairly quiet.">It's
+        a long thin strip, so wide things work best — a row of something, a
+        view, a pattern. Your name goes on top of it, so leave the middle
+        fairly quiet.</p>
+    </div>
+
+    <div class="settings">
+      <div class="setting extras">
+        <span class="setting-label" data-i18n="Look">Look</span>
+        <div class="setting-body">
+          <div class="dropdowns"></div>
+          <button class="reset-styles" type="button" data-action="reset-styles" data-i18n="Clear these">Clear these</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="allowance" hidden></p>
+    <p class="eta-note" hidden></p>
+
+    <div class="buttons">
+      <button class="go" type="button" data-action="go" data-i18n="Make one">Make one</button>
+      <button class="stop" type="button" data-action="stop" hidden data-i18n="Stop">Stop</button>
+    </div>
+
+    <div class="status" hidden>
+      <div class="bar"><div class="fill"></div><span class="pct"></span></div>
+      <p class="msg"></p>
+      <div class="status-line">
+        <p class="timing" hidden></p>
+        <p class="sys" hidden></p>
+      </div>
+    </div>
+    <div class="result" hidden></div>
+  </section>
+
+  <!-- ACE-Step. Two boxes rather than one: a song is what it sounds like *and*
+       what is sung, and they are two fields on the model. Hidden until
+       /api/health says ComfyUI has the model, like the Chat tab. -->
+  <section class="card" data-kind="music" id="card-music" hidden>
+    <h2><span class="emoji" aria-hidden="true">🎵</span> <span data-i18n="Make a song">Make a song</span><button class="card-reset" type="button" data-action="reset-card"
+    data-i18n="↺ Start again" data-i18n-attr="title:Clear everything on this card and start again"
+    title="Clear everything on this card and start again">↺ Start again</button></h2>
+
+    <div class="idea">
+      <label class="sr-only" for="prompt-music" data-i18n="What should the song be about?">What should the song be about?</label>
+      <div class="field"><textarea id="prompt-music" rows="2" enterkeyhint="done"
+        placeholder="A dragon who is scared of pancakes"
+        data-i18n-attr="placeholder:A dragon who is scared of pancakes"></textarea>
+        <button class="clear-text" type="button" data-action="clear-text"
+          aria-label="Clear what you typed" data-i18n-attr="aria-label:Clear what you typed"
+          hidden>✕</button></div>
+      <div class="tools">
+        <button class="helper" type="button" data-action="script" data-i18n="✨ Write me a song">✨ Write me a song</button>
+        <button class="surprise" type="button" data-action="surprise" data-i18n="🎉 Surprise me">🎉 Surprise me</button>
+      </div>
+      <p class="helper-msg" hidden></p>
+      <details class="history" hidden>
+        <summary data-i18n="📜 Things I've asked for before">📜 Things I've asked for before</summary>
+        <div class="history-list"></div>
+      </details>
+    </div>
+
+    <div class="settings">
+      <!-- `sound-kind`, not `kind`: the picture card's "a picture or a
+           character" picker already owns `.kind-pick` and `.kind-note`, and
+           card elements are looked up per card by class. Two cards sharing a
+           class name is how the `.count` collision happened. -->
+      <div class="setting sound-kinds-row">
+        <span class="setting-label" data-i18n="What kind">What kind</span>
+        <div class="setting-body">
+          <!-- Filled from /api/styles → music_kinds, so the labels and the
+               hints are translated server-side like every dropdown label. -->
+          <div class="choices sound-kind-picks" role="radiogroup"
+            aria-label="What kind of sound to make"
+            data-i18n-attr="aria-label:What kind of sound to make"></div>
+          <p class="len-note sound-kind-note"></p>
+        </div>
+      </div>
+      <div class="setting sing-row">
+        <span class="setting-label" data-i18n="Singing">Singing</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="Singing or not" data-i18n-attr="aria-label:Singing or not">
+            <button type="button" class="sing-pick is-on" data-singing="1" role="radio" aria-checked="true">
+              <span aria-hidden="true">🎤</span> <span data-i18n="With singing">With singing</span>
+            </button>
+            <button type="button" class="sing-pick" data-singing="0" role="radio" aria-checked="false">
+              <span aria-hidden="true">🎸</span> <span data-i18n="Just music">Just music</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="setting words">
+        <span class="setting-label" data-i18n="Words">Words</span>
+        <div class="setting-body">
+          <div class="field"><textarea class="lyrics" id="lyrics-music" rows="6"
+            placeholder="[Verse]&#10;I met a dragon on the stairs&#10;He said he doesn't like éclairs&#10;&#10;[Chorus]&#10;Pancakes, pancakes, run away!"
+            data-i18n-attr="placeholder:[Verse]&#10;I met a dragon on the stairs&#10;He said he doesn't like éclairs&#10;&#10;[Chorus]&#10;Pancakes, pancakes, run away!"></textarea>
+            <button class="clear-lyrics" type="button" data-action="clear-lyrics"
+              aria-label="Clear the words" data-i18n-attr="aria-label:Clear the words"
+              hidden>✕</button></div>
+          <p class="len-note" data-i18n="Put <strong>[Verse]</strong> or <strong>[Chorus]</strong> on a line of their own to mark the parts. Leave it empty and you'll get music with nobody singing.">Put
+            <strong>[Verse]</strong> or <strong>[Chorus]</strong> on a line of
+            their own to mark the parts. Leave it empty and you'll get music
+            with nobody singing.</p>
+        </div>
+      </div>
+      <div class="setting">
+        <span class="setting-label" data-i18n="How long">How long</span>
+        <div class="setting-body">
+          <div class="slider-row">
+            <span class="slider-end">10s</span>
+            <!-- Replaced from /api/styles at load; these are only what to show
+                 before it answers. MUSIC_* in .env is the real source. -->
+            <input class="length-slider" type="range" min="10" max="120" step="5" value="30"
+              aria-label="How long the song is, in seconds" aria-valuetext="30 seconds"
+              data-i18n-attr="aria-label:How long the song is, in seconds">
+            <span class="slider-end">120s</span>
+            <span class="length-readout"><output class="length-out">30</output>s</span>
+          </div>
+          <p class="len-note" data-i18n="Longer songs take longer to make.">Longer songs take longer to make.</p>
+        </div>
+      </div>
+      <div class="setting extras">
+        <span class="setting-label" data-i18n="Sound">Sound</span>
+        <div class="setting-body">
+          <div class="dropdowns"></div>
+          <button class="reset-styles" type="button" data-action="reset-styles" data-i18n="Clear these">Clear these</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="allowance" hidden></p>
+    <p class="eta-note" hidden></p>
+
+    <div class="buttons">
+      <button class="go" type="button" data-action="go" data-i18n="Make my song">Make my song</button>
+      <button class="stop" type="button" data-action="stop" hidden data-i18n="Stop">Stop</button>
+    </div>
+
+    <div class="status" hidden>
+      <div class="bar"><div class="fill"></div><span class="pct"></span></div>
+      <p class="msg"></p>
+      <div class="status-line">
+        <p class="timing" hidden></p>
+        <p class="sys" hidden></p>
+      </div>
+    </div>
+    <div class="result" hidden></div>
+  </section>
+
+
+  <!-- The sixth maker, and the only one that makes nothing of its own: every
+       step here is one of the other cards' routes, run in order, with what it
+       made on the screen before the next one starts. That is the whole point -
+       they get to look at the opening picture and say "yes, that one" before
+       three minutes of filming are spent on it. -->
+  <section class="card" data-kind="story" id="card-story" hidden>
+    <h2><span class="emoji" aria-hidden="true">🎭</span> <span data-i18n="Story maker">Story maker</span><button class="card-reset" type="button" data-action="reset-card"
+    data-i18n="↺ Start again" data-i18n-attr="title:Clear everything on this card and start again"
+    title="Clear everything on this card and start again">↺ Start again</button></h2>
+    <p class="mine-note" data-i18n="One idea, all the way to a little film with its own song. One step at a time.">One idea, all the way to a little film with its own song. One step at a time.</p>
+
+    <!-- Where they are, and how much is left. Tapping a step they have already
+         done goes back to it; one they have not reached does nothing, because
+         the order is the point. -->
+    <ol class="story-trail" id="story-trail">
+      <li><button type="button" class="trail is-on" data-step="idea"><span aria-hidden="true">💡</span><span class="trail-word" data-i18n="Idea">Idea</span></button></li>
+      <li><button type="button" class="trail" data-step="picture"><span aria-hidden="true">🎨</span><span class="trail-word" data-i18n="Picture">Picture</span></button></li>
+      <li><button type="button" class="trail" data-step="film"><span aria-hidden="true">🎬</span><span class="trail-word" data-i18n="Film">Film</span></button></li>
+      <li><button type="button" class="trail" data-step="song"><span aria-hidden="true">🎵</span><span class="trail-word" data-i18n="Song">Song</span></button></li>
+      <li><button type="button" class="trail" data-step="together"><span aria-hidden="true">✨</span><span class="trail-word" data-i18n="Together">Together</span></button></li>
+    </ol>
+
+    <p class="story-off" id="story-off" hidden></p>
+    <p class="story-say" id="story-say"></p>
+
+    <div class="idea">
+      <label class="sr-only" for="prompt-story" data-i18n="What's your story?">What's your story?</label>
+      <div class="field"><textarea id="prompt-story" rows="3" enterkeyhint="done"
+        placeholder="A fox who builds a rocket out of junk in the garden"
+        data-i18n-attr="placeholder:A fox who builds a rocket out of junk in the garden"></textarea>
+        <button class="clear-text" type="button" data-action="clear-text"
+          aria-label="Clear what you typed" data-i18n-attr="aria-label:Clear what you typed"
+          hidden>✕</button></div>
+      <div class="tools">
+        <button class="helper" type="button" data-action="script" data-i18n="✨ Help me write it">✨ Help me write it</button>
+        <button class="surprise" type="button" data-action="surprise" data-i18n="🎉 Surprise me">🎉 Surprise me</button>
+      </div>
+      <p class="helper-msg" hidden></p>
+      <details class="history" hidden>
+        <summary data-i18n="📜 Things I've asked for before">📜 Things I've asked for before</summary>
+        <div class="history-list"></div>
+      </details>
+    </div>
+
+    <div class="settings">
+      <div class="setting shape">
+        <span class="setting-label" data-i18n="Shape">Shape</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="Shape" data-i18n-attr="aria-label:Shape">
+            <button type="button" class="orient is-on" data-orientation="landscape" role="radio" aria-checked="true"><span class="glyph land" aria-hidden="true"></span><span data-i18n="Landscape">Landscape</span></button>
+            <button type="button" class="orient" data-orientation="portrait" role="radio" aria-checked="false"><span class="glyph port" aria-hidden="true"></span><span data-i18n="Portrait">Portrait</span></button>
+            <button type="button" class="orient" data-orientation="square" role="radio" aria-checked="false"><span class="glyph sq" aria-hidden="true"></span><span data-i18n="Square">Square</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="setting parts" hidden>
+        <span class="setting-label" data-i18n="How many parts">How many parts</span>
+        <div class="setting-body">
+          <div class="choices" role="radiogroup" aria-label="How many parts" data-i18n-attr="aria-label:How many parts">
+            <button type="button" class="part-pick is-on" data-parts="2" role="radio" aria-checked="true" data-i18n="2 parts">2 parts</button>
+            <button type="button" class="part-pick" data-parts="3" role="radio" aria-checked="false" data-i18n="3 parts">3 parts</button>
+            <button type="button" class="part-pick" data-parts="4" role="radio" aria-checked="false" data-i18n="4 parts">4 parts</button>
+          </div>
+        </div>
+      </div>
+      <div class="setting howlong" hidden>
+        <span class="setting-label" data-i18n="How long">How long</span>
+        <div class="setting-body">
+          <div class="slider-row">
+            <span class="slider-end">5s</span>
+            <input class="length-slider" type="range" min="5" max="15" step="1" value="5"
+              aria-label="How long each part is" aria-valuetext="5 seconds"
+              data-i18n-attr="aria-label:How long each part is">
+            <span class="slider-end">15s</span>
+            <span class="length-readout"><output class="length-out">5</output>s</span>
+          </div>
+        </div>
+      </div>
+      <div class="setting keep-sound" hidden>
+        <span class="setting-label" data-i18n="The film's sound">The film's sound</span>
+        <div class="setting-body">
+          <label class="tickbox"><input type="checkbox" id="story-keep-sound" checked>
+            <span data-i18n="Keep the film's own sound under the song">Keep the film's own sound under the song</span></label>
+        </div>
+      </div>
+      <div class="setting extras">
+        <span class="setting-label" data-i18n="Look">Look</span>
+        <div class="setting-body">
+          <div class="dropdowns"></div>
+          <button class="reset-styles" type="button" data-action="reset-styles" data-i18n="Clear these">Clear these</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="allowance" hidden></p>
+    <p class="eta-note" hidden></p>
+
+    <div class="buttons">
+      <button class="go" type="button" data-action="go" data-i18n="That's my story!">That's my story!</button>
+      <button class="story-skip" type="button" data-action="story-skip" hidden data-i18n="Skip this bit">Skip this bit</button>
+      <button class="story-next" type="button" data-action="story-next" hidden data-i18n="Next →">Next →</button>
+      <button class="stop" type="button" data-action="stop" hidden data-i18n="Stop">Stop</button>
+    </div>
+
+    <div class="status" hidden>
+      <div class="bar"><div class="fill"></div><span class="pct"></span></div>
+      <p class="msg"></p>
+      <div class="status-line">
+        <p class="timing" hidden></p>
+        <p class="sys" hidden></p>
+      </div>
+    </div>
+    <div class="result" hidden></div>
+  </section>
+
+  <section class="card chat" id="card-chat" hidden>
+    <h2><span class="emoji" aria-hidden="true">💬</span> <span data-i18n="Chat with">Chat with</span> <span id="chat-name">Sparky</span></h2>
+    <p class="mine-note" data-i18n="Ask for an idea, or tell me what you’re making. Your grown-ups can read everything said here.">Ask
+      for an idea, or tell me what you&rsquo;re making. Your grown-ups can read
+      everything said here.</p>
+
+    <p class="chat-off" id="chat-off" hidden></p>
+    <div class="chat-log" id="chat-log" role="log" aria-live="polite" aria-label="Your chat"
+      data-i18n-attr="aria-label:Your chat"></div>
+
+    <div class="chat-starters" id="chat-starters" hidden></div>
+
+    <div class="chat-ask">
+      <label class="sr-only" for="chat-input" data-i18n="Say something">Say something</label>
+      <textarea id="chat-input" rows="2" maxlength="600" enterkeyhint="send"
+        placeholder="Say something…" data-i18n-attr="placeholder:Say something…"></textarea>
+      <button type="button" class="chat-send" id="chat-send" aria-label="Send it"
+        data-i18n-attr="aria-label:Send it">➤</button>
+    </div>
+
+    <button type="button" class="chat-clear" id="chat-clear" data-i18n="Start a new chat">Start a new chat</button>
+  </section>
+
+</main>
+
+<!-- All this sheet is for now is picking a picture for something else - where
+     a clip starts, where it ends. The Gallery itself is a page, not a sheet. -->
+<div class="sheet" id="gallery" hidden>
+  <div class="sheet-bar">
+    <h2 id="gallery-title" data-i18n="Pick a picture">Pick a picture</h2>
+    <div class="bar-actions">
+      <button class="sheet-close" type="button" data-action="close-gallery" data-i18n="Done">Done</button>
+    </div>
+  </div>
+
+  <div class="find">
+    <input id="find" type="search" enterkeyhint="search" autocomplete="off"
+      placeholder="🔎 Find something you made" aria-label="Search your gallery"
+      data-i18n-attr="placeholder:🔎 Find something you made;aria-label:Search your gallery">
+    <button class="find-clear" type="button" id="find-clear" aria-label="Clear the search" hidden
+      data-i18n-attr="aria-label:Clear the search">✕</button>
+  </div>
+
+  <p class="sheet-empty" hidden data-i18n="Nothing here yet! Go and make something.">Nothing here yet! Go and make something.</p>
+
+  <section class="shelf" data-media="favourite" hidden>
+    <h3><span data-i18n="⭐ Favourites">⭐ Favourites</span> <span class="count"></span></h3>
+    <div class="grid"></div>
+  </section>
+  <section class="shelf" data-media="family" hidden>
+    <h3><span data-i18n="👨‍👩‍👧 Family">👨‍👩‍👧 Family</span> <span class="count"></span></h3>
+    <div class="grid"></div>
+  </section>
+  <section class="shelf" data-media="image" hidden>
+    <h3><span data-i18n="🎨 Pictures">🎨 Pictures</span> <span class="count"></span></h3>
+    <div class="grid"></div>
+  </section>
+  <section class="shelf" data-media="comic" hidden>
+    <h3><span data-i18n="📖 Comics">📖 Comics</span> <span class="count"></span></h3>
+    <div class="grid"></div>
+  </section>
+  <section class="shelf" data-media="panel" hidden>
+    <h3><span data-i18n="🧩 Comic pictures">🧩 Comic pictures</span> <span class="count"></span></h3>
+    <div class="grid"></div>
+  </section>
+  <section class="shelf" data-media="sticker" hidden>
+    <h3><span data-i18n="✂️ Stickers">✂️ Stickers</span> <span class="count"></span></h3>
+    <div class="grid"></div>
+  </section>
+  <section class="shelf" data-media="upload" hidden>
+    <h3><span data-i18n="📷 Photos & drawings">📷 Photos &amp; drawings</span> <span class="count"></span></h3>
+    <div class="grid"></div>
+  </section>
+  <section class="shelf" data-media="video" hidden>
+    <h3><span data-i18n="🎬 Videos">🎬 Videos</span> <span class="count"></span></h3>
+    <div class="grid"></div>
+  </section>
+  <section class="shelf" data-media="music" hidden>
+    <h3><span data-i18n="🎵 Songs">🎵 Songs</span> <span class="count"></span></h3>
+    <div class="grid"></div>
+  </section>
+</div>
+
+<div class="sheet viewer" id="viewer" hidden>
+  <div class="sheet-bar">
+    <button class="sheet-back" type="button" data-action="close-viewer" data-i18n="← Back">← Back</button>
+    <button class="sheet-close" type="button" data-action="close-gallery" data-i18n="Done">Done</button>
+  </div>
+  <div class="viewer-media"></div>
+  <div class="viewer-meta">
+    <label class="viewer-name-row">
+      <span class="sr-only" data-i18n="What is it called?">What is it called?</span>
+      <input class="viewer-name" type="text" maxlength="60" enterkeyhint="done"
+        placeholder="✏️ Give it a name" data-i18n-attr="placeholder:✏️ Give it a name">
+    </label>
+    <div class="viewer-tags"></div>
+    <!-- Whose it is, for anything off the family shelf that is not theirs. -->
+    <p class="viewer-maker" hidden>
+      <span class="maker-face"></span><span class="maker-name"></span>
+    </p>
+    <h3 class="viewer-asked" data-i18n="What you asked for">What you asked for</h3>
+    <p class="viewer-prompt"></p>
+    <!-- A song's words. Its own block because they are lines rather than a
+         sentence, and the whole point of a song is the words. -->
+    <div class="viewer-lyrics" hidden>
+      <h3 data-i18n="The words">The words</h3>
+      <pre class="lyric-sheet"></pre>
+    </div>
+    <p class="viewer-facts"></p>
+  </div>
+  <div class="viewer-actions live">
+    <button class="viewer-fav" type="button" data-action="toggle-fav" data-i18n="☆ Favourite">☆ Favourite</button>
+    <button class="viewer-family" type="button" data-action="toggle-family" hidden data-i18n="👨‍👩‍👧 Show the family">👨‍👩‍👧 Show the family</button>
+    <button class="viewer-again" type="button" data-action="make-again" data-i18n="🔁 Make another like this">🔁 Make another like this</button>
+    <button class="viewer-tweak" type="button" data-action="tweak" hidden data-i18n="🎯 Make it again, but…">🎯 Make it again, but&hellip;</button>
+    <button class="viewer-animate" type="button" data-action="animate-item" hidden data-i18n="✨ Animate this">✨ Animate this</button>
+    <button class="viewer-cast" type="button" data-action="make-character" hidden data-i18n="🧑‍🎤 Save as a character">🧑‍🎤 Save as a character</button>
+    <button class="viewer-voice" type="button" data-action="add-voice" hidden data-i18n="🎤 Say something over it">🎤 Say something over it</button>
+    <button class="viewer-sticker" type="button" data-action="make-sticker" hidden data-i18n="✂️ Turn it into a sticker">✂️ Turn it into a sticker</button>
+    <button class="viewer-huge" type="button" data-action="make-huge" hidden data-i18n="🔍 Make it huge">🔍 Make it huge</button>
+    <button class="viewer-restyle" type="button" data-action="turn-into" hidden data-i18n="🎨 Turn it into…">🎨 Turn it into…</button>
+    <button class="viewer-change" type="button" data-action="change-picture" hidden data-i18n="🪄 Change this picture">🪄 Change this picture</button>
+    <button class="viewer-outside" type="button" data-action="see-outside" hidden data-i18n="🔭 What's outside the frame?">🔭 What's outside the frame?</button>
+    <button class="viewer-fix" type="button" data-action="fix-a-bit" hidden data-i18n="🩹 Fix just this bit">🩹 Fix just this bit</button>
+    <button class="viewer-banner" type="button" data-action="use-as-banner" hidden data-i18n="🖼️ Put it at the top">🖼️ Put it at the top</button>
+    <button class="viewer-face" type="button" data-action="use-as-face" hidden data-i18n="👤 That one's me">👤 That one's me</button>
+    <button class="viewer-sound" type="button" data-action="add-sound" hidden data-i18n="🔊 Add a sound effect">🔊 Add a sound effect</button>
+    <button class="viewer-frame" type="button" data-action="grab-frame" hidden data-i18n="📸 Grab a picture from it">📸 Grab a picture from it</button>
+    <button class="viewer-smooth" type="button" data-action="make-smooth" hidden data-i18n="✨ Make it smooth">✨ Make it smooth</button>
+    <button class="viewer-slow" type="button" data-action="make-slow" hidden data-i18n="🐌 Slow it down">🐌 Slow it down</button>
+    <button class="viewer-loop" type="button" data-action="make-loop" hidden data-i18n="🌀 Make a moving sticker">🌀 Make a moving sticker</button>
+    <button class="viewer-draw" type="button" data-action="draw-on-item" hidden data-i18n="✏️ Draw on it">✏️ Draw on it</button>
+    <button class="viewer-print" type="button" data-action="print-item" hidden data-i18n="🖨️ Print it">🖨️ Print it</button>
+    <button class="viewer-card" type="button" data-action="make-card" hidden data-i18n="💌 Make a card">💌 Make a card</button>
+    <button class="viewer-next" type="button" data-action="what-next" hidden data-i18n="▶️ What happens next?">▶️ What happens next?</button>
+    <button class="viewer-share" type="button" data-action="share-item" hidden data-i18n="📤 Share">📤 Share</button>
+    <a class="viewer-save" download data-i18n="⬇︎ Save it">⬇︎ Save it</a>
+    <button class="viewer-delete" type="button" data-action="delete-item" data-i18n="🗑️ Delete">🗑️ Delete</button>
+  </div>
+  <div class="viewer-actions trashed" hidden>
+    <button class="viewer-restore" type="button" data-action="restore-item" data-i18n="↩️ Put it back">↩️ Put it back</button>
+    <button class="viewer-destroy" type="button" data-action="destroy-item" data-i18n="🗑️ Delete for good">🗑️ Delete for good</button>
+  </div>
+</div>
+
+<div class="sheet join" id="join" hidden>
+  <div class="sheet-bar">
+    <h2 data-i18n="Make a film">Make a film</h2>
+    <div class="bar-actions">
+      <button class="sheet-back" type="button" data-action="close-join" data-i18n="Cancel">Cancel</button>
+    </div>
+  </div>
+  <p class="join-note"></p>
+  <label class="say">
+    <span class="say-label"><span data-i18n="🎬 What's your film called?">🎬 What's your film called?</span> <em data-i18n="(you can leave this empty)">(you can leave this empty)</em></span>
+    <input class="join-title" type="text" maxlength="60" enterkeyhint="done" placeholder="The Great Pancake Adventure"
+      data-i18n-attr="placeholder:The Great Pancake Adventure">
+  </label>
+  <canvas class="title-preview" width="640" height="352"></canvas>
+  <button class="go join-go" type="button" data-action="join-go" data-i18n="Make my film">Make my film</button>
+  <p class="join-status" hidden></p>
+</div>
+
+<div class="sheet cardmaker" id="cardmaker" hidden>
+  <div class="sheet-bar">
+    <h2 data-i18n="Make a card">Make a card</h2>
+    <div class="bar-actions">
+      <button class="sheet-back" type="button" data-action="close-card" data-i18n="Cancel">Cancel</button>
+      <button class="sheet-close" type="button" data-action="card-go" data-i18n="Save my card">Save my card</button>
+    </div>
+  </div>
+  <label class="say">
+    <span class="say-label" data-i18n="💌 What should it say?">💌 What should it say?</span>
+    <input class="card-message" type="text" maxlength="90" enterkeyhint="done" placeholder="Happy birthday Grandma!"
+      data-i18n-attr="placeholder:Happy birthday Grandma!">
+  </label>
+  <div class="card-colours" role="radiogroup" aria-label="Card colour"
+    data-i18n-attr="aria-label:Card colour"></div>
+  <canvas class="card-preview" width="640" height="800"></canvas>
+  <p class="join-status card-status" hidden></p>
+</div>
+
+<div class="sheet voice" id="voice" hidden>
+  <div class="sheet-bar">
+    <h2 data-i18n="🎤 Say something">🎤 Say something</h2>
+    <div class="bar-actions">
+      <!-- Not "Done", and not the green primary every other sheet uses: in
+           here the finishing action is "Use it" further down, and a green
+           Done at the top was read as that and threw the recording away. -->
+      <button class="sheet-close voice-cancel" type="button" data-action="close-voice" data-i18n="✕ Close">✕ Close</button>
+    </div>
+  </div>
+  <p class="voice-note" data-i18n="Tap the big button and talk. Your voice goes on top of your video.">Tap the big button and talk. Your voice goes on top of your video.</p>
+  <p class="voice-status" id="voice-status" hidden></p>
+  <video class="voice-preview" playsinline preload="metadata" muted></video>
+  <button class="voice-record" type="button" id="voice-record">
+    <span class="voice-dot" aria-hidden="true"></span>
+    <span class="voice-label" data-i18n="Start talking">Start talking</span>
+  </button>
+  <p class="voice-time" id="voice-time" hidden>0:00</p>
+  <audio class="voice-playback" id="voice-playback" controls hidden></audio>
+  <label class="voice-keep">
+    <input type="checkbox" id="voice-keep" checked>
+    <span data-i18n="Keep the video's own sound too (it goes quieter while you talk)">Keep the video's own sound too (it goes quieter while you talk)</span>
+  </label>
+  <div class="voice-actions" hidden>
+    <button class="voice-use" type="button" id="voice-use" data-i18n="✨ Put it on my video">✨ Put it on my video</button>
+    <button class="voice-again" type="button" id="voice-again" data-i18n="🔁 Record it again">🔁 Record it again</button>
+    <button class="voice-discard" type="button" id="voice-discard" data-action="discard-voice" hidden data-i18n="🗑️ Throw the recording away">🗑️ Throw the recording away</button>
+  </div>
+  <label class="voice-file">
+    <span data-i18n="Or use a sound you already have">Or use a sound you already have</span>
+    <input type="file" id="voice-file" accept="audio/*,video/*">
+  </label>
+</div>
+
+<div class="sheet sounds" id="sounds" hidden>
+  <div class="sheet-bar">
+    <h2 data-i18n="🔊 Add a sound">🔊 Add a sound</h2>
+    <div class="bar-actions">
+      <button class="sheet-close voice-cancel" type="button" data-action="close-sounds" data-i18n="✕ Close">✕ Close</button>
+    </div>
+  </div>
+  <p class="voice-note" data-i18n="Pick a sound, slide to where you want it, then put it on.">Pick a sound, slide to where you want it, then put it on.</p>
+  <video class="sheet-video" id="sound-video" playsinline preload="metadata" controls></video>
+  <div class="when-row">
+    <label for="sound-at" data-i18n="When?">When?</label>
+    <input id="sound-at" type="range" min="0" max="100" step="1" value="0"
+      aria-label="When the sound happens" data-i18n-attr="aria-label:When the sound happens">
+    <output class="when-out" id="sound-at-out">0.0s</output>
+  </div>
+  <div class="sound-grid" id="sound-grid"></div>
+  <div class="voice-actions">
+    <button class="voice-use" type="button" id="sound-go" disabled data-i18n="✨ Put it on my video">✨ Put it on my video</button>
+  </div>
+  <p class="join-status" id="sound-status" hidden></p>
+</div>
+
+<div class="sheet framer" id="framer" hidden>
+  <div class="sheet-bar">
+    <h2 data-i18n="📸 Grab a picture">📸 Grab a picture</h2>
+    <div class="bar-actions">
+      <button class="sheet-close voice-cancel" type="button" data-action="close-framer" data-i18n="✕ Close">✕ Close</button>
+    </div>
+  </div>
+  <p class="voice-note" data-i18n="Slide to the bit you like. The picture underneath is exactly what you'll keep.">Slide to the bit you like. The picture underneath is exactly what you'll keep.</p>
+  <video class="sheet-video" id="frame-video" playsinline preload="metadata" muted></video>
+  <div class="when-row">
+    <label for="frame-at" data-i18n="Which bit?">Which bit?</label>
+    <input id="frame-at" type="range" min="0" max="100" step="1" value="0"
+      aria-label="Which moment to keep" data-i18n-attr="aria-label:Which moment to keep">
+    <output class="when-out" id="frame-at-out">0.0s</output>
+  </div>
+  <div class="frame-shot"><img id="frame-shot" alt="The picture you are about to keep"
+    data-i18n-attr="alt:The picture you are about to keep"></div>
+  <div class="voice-actions">
+    <button class="voice-use" type="button" id="frame-go" data-i18n="✨ Keep this picture">✨ Keep this picture</button>
+  </div>
+  <p class="join-status" id="frame-status" hidden></p>
+</div>
+
+<div class="sheet looper" id="looper" hidden>
+  <div class="sheet-bar">
+    <h2 data-i18n="🌀 Moving sticker">🌀 Moving sticker</h2>
+    <div class="bar-actions">
+      <button class="sheet-close voice-cancel" type="button" data-action="close-looper" data-i18n="✕ Close">✕ Close</button>
+    </div>
+  </div>
+  <p class="voice-note" data-i18n="Pick the bit you want and it'll loop for ever - a sticker that moves.">Pick the bit you want and it'll loop for ever - a sticker that moves.</p>
+  <video class="sheet-video" id="loop-video" playsinline preload="metadata" muted></video>
+  <div class="when-row">
+    <label for="loop-at" data-i18n="Start here">Start here</label>
+    <input id="loop-at" type="range" min="0" max="100" step="1" value="0"
+      aria-label="Where the loop starts" data-i18n-attr="aria-label:Where the loop starts">
+    <output class="when-out" id="loop-at-out">0.0s</output>
+  </div>
+  <div class="when-row">
+    <label data-i18n="How long?">How long?</label>
+    <div class="choices" id="loop-lengths" role="radiogroup" aria-label="How long the loop is"
+      data-i18n-attr="aria-label:How long the loop is">
+      <button type="button" class="count-pick" data-seconds="1" role="radio" aria-checked="false" data-i18n="1 second">1 second</button>
+      <button type="button" class="count-pick is-on" data-seconds="2" role="radio" aria-checked="true" data-i18n="2 seconds">2 seconds</button>
+    </div>
+  </div>
+  <div class="frame-shot"><img id="loop-shot" alt="Where your moving sticker starts"
+    data-i18n-attr="alt:Where your moving sticker starts"></div>
+  <div class="voice-actions">
+    <button class="voice-use" type="button" id="loop-go" data-i18n="✨ Make my sticker">✨ Make my sticker</button>
+  </div>
+  <p class="join-status" id="loop-status" hidden></p>
+</div>
+
+<div class="sheet change" id="change" hidden>
+  <div class="sheet-bar">
+    <h2 data-i18n="🪄 Change this picture">🪄 Change this picture</h2>
+    <div class="bar-actions">
+      <button class="sheet-close voice-cancel" type="button" data-action="close-change" data-i18n="✕ Close">✕ Close</button>
+    </div>
+  </div>
+  <p class="voice-note" data-i18n="Say what you'd like different and it'll make the same picture again with that changed.">Say what you'd like different and it'll make the same picture again with that changed.</p>
+  <div class="frame-shot"><img id="change-shot" alt="The picture you're changing"
+    data-i18n-attr="alt:The picture you're changing"></div>
+  <label class="sr-only" for="change-words" data-i18n="What should be different?">What should be different?</label>
+  <textarea id="change-words" rows="2" maxlength="300"
+    placeholder="make it night-time&#10;give the fox a scarf"
+    data-i18n-attr="placeholder:make it night-time&#10;give the fox a scarf"></textarea>
+  <div class="choices idea-chips" id="change-ideas"></div>
+  <label class="voice-keep" id="change-me-row" hidden>
+    <input type="checkbox" id="change-me">
+    <span data-i18n="...and put me in it 👤">...and put me in it 👤</span>
+  </label>
+  <div class="voice-actions">
+    <button class="voice-use" type="button" id="change-go" data-i18n="✨ Go">✨ Go</button>
+  </div>
+  <p class="join-status" id="change-status" hidden></p>
+</div>
+
+<div class="sheet restyle" id="restyle" hidden>
+  <div class="sheet-bar">
+    <h2 data-i18n="🎨 Turn it into…">🎨 Turn it into…</h2>
+    <div class="bar-actions">
+      <button class="sheet-close voice-cancel" type="button" data-action="close-restyle" data-i18n="✕ Close">✕ Close</button>
+    </div>
+  </div>
+  <p class="voice-note" data-i18n="Pick a kind of picture and it'll draw this one again that way, with everything still where it is.">Pick a kind of picture and it'll draw this one again that way, with everything still where it is.</p>
+  <div class="frame-shot"><img id="restyle-shot" alt="The picture you're turning into something else"
+    data-i18n-attr="alt:The picture you're turning into something else"></div>
+  <div class="choices idea-chips" id="restyle-chips" role="radiogroup" aria-label="What to turn it into"
+    data-i18n-attr="aria-label:What to turn it into"></div>
+  <label class="sr-only" for="restyle-words" data-i18n="Anything else? (you don't have to say)">Anything else? (you don't have to say)</label>
+  <textarea id="restyle-words" rows="2" maxlength="300"
+    placeholder="you don't have to say - or add your own twist: make it night-time"
+    data-i18n-attr="placeholder:you don't have to say - or add your own twist: make it night-time"></textarea>
+  <div class="voice-actions">
+    <button class="voice-use" type="button" id="restyle-go" data-i18n="✨ Go">✨ Go</button>
+  </div>
+  <p class="join-status" id="restyle-status" hidden></p>
+</div>
+
+<div class="sheet outside" id="outside" hidden>
+  <div class="sheet-bar">
+    <h2 data-i18n="🔭 What's outside the frame?">🔭 What's outside the frame?</h2>
+    <div class="bar-actions">
+      <button class="sheet-close voice-cancel" type="button" data-action="close-outside" data-i18n="✕ Close">✕ Close</button>
+    </div>
+  </div>
+  <p class="voice-note" data-i18n="Pick a side and it'll invent what was just out of the picture.">Pick a side and it'll invent what was just out of the picture.</p>
+  <div class="frame-shot"><img id="outside-shot" alt="The picture you're growing"
+    data-i18n-attr="alt:The picture you're growing"></div>
+  <div class="when-row">
+    <label data-i18n="Which way?">Which way?</label>
+    <div class="choices" id="outside-sides" role="radiogroup" aria-label="Which way to grow"
+      data-i18n-attr="aria-label:Which way to grow">
+      <button type="button" class="count-pick is-on" data-side="all" role="radio" aria-checked="true" data-i18n="All round">All round</button>
+      <button type="button" class="count-pick" data-side="left" role="radio" aria-checked="false" data-i18n="⬅️ Left">⬅️ Left</button>
+      <button type="button" class="count-pick" data-side="right" role="radio" aria-checked="false" data-i18n="➡️ Right">➡️ Right</button>
+      <button type="button" class="count-pick" data-side="top" role="radio" aria-checked="false" data-i18n="⬆️ Up">⬆️ Up</button>
+      <button type="button" class="count-pick" data-side="bottom" role="radio" aria-checked="false" data-i18n="⬇️ Down">⬇️ Down</button>
+    </div>
+  </div>
+  <div class="when-row">
+    <label data-i18n="How much?">How much?</label>
+    <div class="choices" id="outside-amounts" role="radiogroup" aria-label="How much bigger"
+      data-i18n-attr="aria-label:How much bigger">
+      <button type="button" class="count-pick is-on" data-amount="bit" role="radio" aria-checked="true" data-i18n="A bit">A bit</button>
+      <button type="button" class="count-pick" data-amount="lot" role="radio" aria-checked="false" data-i18n="A lot">A lot</button>
+    </div>
+  </div>
+  <label class="sr-only" for="outside-words" data-i18n="What's out there? (you don't have to say)">What's out there? (you don't have to say)</label>
+  <textarea id="outside-words" rows="2" maxlength="300"
+    placeholder="you don't have to say - or try: a beach, more trees"
+    data-i18n-attr="placeholder:you don't have to say - or try: a beach, more trees"></textarea>
+  <div class="voice-actions">
+    <button class="voice-use" type="button" id="outside-go" data-i18n="✨ Go">✨ Go</button>
+  </div>
+  <p class="join-status" id="outside-status" hidden></p>
+</div>
+
+<div class="sheet compare" id="compare" hidden>
+  <div class="sheet-bar">
+    <h2 data-i18n="🔍 Which one?">🔍 Which one?</h2>
+    <div class="bar-actions">
+      <button class="sheet-close" type="button" data-action="close-compare" data-i18n="Done">Done</button>
+    </div>
+  </div>
+  <p class="voice-note" data-i18n="Slide across to see one and then the other.">Slide across to see one and then the other.</p>
+  <div class="compare-wrap" id="compare-wrap">
+    <img class="compare-a" id="compare-a" alt="The first one" data-i18n-attr="alt:The first one">
+    <div class="compare-b-wrap" id="compare-b-wrap">
+      <img class="compare-b" id="compare-b" alt="The second one" data-i18n-attr="alt:The second one">
+    </div>
+    <span class="compare-handle" id="compare-handle" aria-hidden="true"></span>
+  </div>
+  <input id="compare-slider" type="range" min="0" max="100" value="50"
+    aria-label="Slide between the two pictures" data-i18n-attr="aria-label:Slide between the two pictures">
+  <div class="compare-picks">
+    <button type="button" class="compare-pick" id="compare-star-a" data-i18n="☆ This one’s best">☆ This one&rsquo;s best</button>
+    <button type="button" class="compare-pick" id="compare-star-b" data-i18n="☆ This one’s best">☆ This one&rsquo;s best</button>
+  </div>
+</div>
+
+<div class="sheet castsheet" id="castsheet" hidden>
+  <div class="sheet-bar">
+    <h2 id="castsheet-name" data-i18n="Character">Character</h2>
+    <div class="bar-actions">
+      <button class="sheet-close" type="button" data-action="close-castsheet" data-i18n="Done">Done</button>
+    </div>
+  </div>
+  <div class="cast-hero"><img id="castsheet-face" alt=""></div>
+  <p class="cast-look" id="castsheet-look"></p>
+  <!-- Looking after them, not just looking at them. Rewording the look matters
+       most: it is the sentence repeated into every prompt they are in. -->
+  <div class="cast-actions">
+    <button type="button" id="castsheet-rename" data-i18n="✏️ Rename">✏️ Rename</button>
+    <button type="button" id="castsheet-relook" data-i18n="🎨 How they look">🎨 How they look</button>
+  </div>
+  <p class="sheet-empty" id="castsheet-empty" hidden
+    data-i18n="Nothing with them in it yet! Choose them under “Who’s in it?” and make something.">
+    Nothing with them in it yet! Choose them under &ldquo;Who&rsquo;s in it?&rdquo; and make something.
+  </p>
+  <div class="grid" id="castsheet-grid"></div>
+  <button class="cast-forget" type="button" id="castsheet-forget" data-i18n="👋 Say goodbye to them">👋 Say goodbye to them</button>
+</div>
+
+<!-- Down here on purpose: findable by a grown-up who is looking for it,
+     not an invitation halfway up the page. -->
+<footer class="grown-up">
+  <a href="/parent" target="_blank" rel="noopener"
+    data-i18n="I'm a grown-up — the parent page">I'm a grown-up &mdash; the parent page</a>
+</footer>
+
+<div class="toast" id="toast" hidden>
+  <span id="toast-text"></span>
+  <button type="button" id="toast-do" hidden></button>
+  <!-- Only on the lines about something they have just made - the things they
+       starts from their gallery have no card to put a Delete under. -->
+  <button type="button" id="toast-bin" class="bin" hidden></button>
+</div>
+
+<!-- Who is this? Shown on load whenever there is more than one person, with
+     whoever used it last already highlighted, so the usual case is one tap on
+     a face rather than a decision. -->
+<div class="paused whoami" id="whoami" hidden>
+  <div class="paused-card whoami-card">
+    <h2 data-i18n="Who's making things today?">Who's making things today?</h2>
+    <div class="faces" id="faces"></div>
+    <p class="whoami-note" id="whoami-note"></p>
+  </div>
+</div>
+
+<!-- Three questions and then it fills in the Picture card and takes them
+     there. Not its own maker: a picture of you is a picture, and giving it a
+     second Go button with its own progress bar would be two of everything. -->
+<div class="sheet mewiz" id="mewiz" hidden>
+  <div class="sheet-bar">
+    <h2 data-i18n="Make a picture of me">Make a picture of me</h2>
+    <div class="bar-actions">
+      <button class="sheet-close" type="button" data-action="close-mewiz" data-i18n="Cancel">Cancel</button>
+    </div>
+  </div>
+  <div class="sheet-body mewiz-body">
+    <div class="mewiz-step">
+      <h3 data-i18n="1. What are you?">1. What are you?</h3>
+      <div class="mewiz-picks" id="mewiz-what" role="radiogroup" aria-label="What are you?"
+        data-i18n-attr="aria-label:What are you?"></div>
+      <label class="sr-only" for="mewiz-own" data-i18n="Or type your own">Or type your own</label>
+      <input id="mewiz-own" type="text" maxlength="60" placeholder="…or type your own"
+        data-i18n-attr="placeholder:…or type your own">
+    </div>
+    <div class="mewiz-step">
+      <h3 data-i18n="2. What colour?">2. What colour?</h3>
+      <div class="mewiz-picks" id="mewiz-colour" role="radiogroup" aria-label="What colour?"
+        data-i18n-attr="aria-label:What colour?"></div>
+    </div>
+    <div class="mewiz-step">
+      <h3 data-i18n="3. Anything else?">3. Anything else?</h3>
+      <div class="mewiz-picks" id="mewiz-extra" role="group" aria-label="Anything else?"
+        data-i18n-attr="aria-label:Anything else?"></div>
+      <label class="sr-only" for="mewiz-more" data-i18n="Anything else">Anything else</label>
+      <input id="mewiz-more" type="text" maxlength="60" placeholder="…a wizard hat, freckles, a scarf"
+        data-i18n-attr="placeholder:…a wizard hat, freckles, a scarf">
+    </div>
+    <p class="mewiz-preview" id="mewiz-preview"></p>
+    <div class="buttons">
+      <button class="go" type="button" data-action="mewiz-go" data-i18n="Let's make it! ✨">Let's make it! ✨</button>
+    </div>
+    <p class="len-note" data-i18n="It makes four at once so you can pick your favourite. Then tap <strong>👤 That one's me</strong> under the one you like.">It
+      makes four at once so you can pick your favourite. Then tap
+      <strong>👤 That one's me</strong> under the one you like.</p>
+  </div>
+</div>
+
+<div class="paused quiz" id="quiz" hidden>
+  <div class="paused-card">
+    <p class="paused-emoji">🧮✨</p>
+    <h2 data-i18n="Warm up your brain!">Warm up your brain!</h2>
+    <p id="quiz-blurb" data-i18n="Get these right and the factory opens for today.">Get these right and the factory opens for today.</p>
+    <form class="sums" id="sums"></form>
+    <p class="quiz-msg" id="quiz-msg" hidden></p>
+    <button class="go" type="button" id="quiz-go" data-i18n="Check my answers">Check my answers</button>
+    <details class="grownup" id="grownup" hidden>
+      <summary data-i18n="I'm a grown-up">I'm a grown-up</summary>
+      <div class="grownup-row">
+        <input id="grownup-pin" type="password" inputmode="numeric" autocomplete="off"
+          enterkeyhint="go" placeholder="PIN" aria-label="Grown-up PIN"
+          data-i18n-attr="aria-label:Grown-up PIN">
+        <button type="button" id="grownup-go" data-i18n="Let me in">Let me in</button>
+      </div>
+      <p class="grownup-msg" id="grownup-msg" hidden></p>
+    </details>
+  </div>
+</div>
+
+<div class="paused" id="paused" hidden>
+  <div class="paused-card">
+    <p class="paused-emoji">🏭💤</p>
+    <h2 data-i18n="The factory is closed right now">The factory is closed right now</h2>
+    <p id="paused-when" data-i18n="Back soon!">Back soon!</p>
+  </div>
+</div>
+
+<div class="sheet draw" id="draw" hidden>
+  <div class="sheet-bar">
+    <h2 data-i18n="Draw something">Draw something</h2>
+    <div class="bar-actions">
+      <button class="sheet-back" type="button" data-action="close-draw" data-i18n="Cancel">Cancel</button>
+      <button class="sheet-close" type="button" data-action="use-drawing" data-i18n="Use my drawing">Use my drawing</button>
+      <button class="sheet-close draw-fix" type="button" data-action="use-mask" hidden data-i18n="✨ Go">✨ Go</button>
+    </div>
+  </div>
+  <div class="draw-tools">
+    <div class="palette" role="radiogroup" aria-label="Colour" data-i18n-attr="aria-label:Colour"></div>
+    <div class="brushes">
+      <button type="button" class="brush" data-size="6" aria-label="Thin brush" data-i18n-attr="aria-label:Thin brush"><span style="width:8px;height:8px"></span></button>
+      <button type="button" class="brush is-on" data-size="14" aria-label="Medium brush" data-i18n-attr="aria-label:Medium brush"><span style="width:16px;height:16px"></span></button>
+      <button type="button" class="brush" data-size="30" aria-label="Thick brush" data-i18n-attr="aria-label:Thick brush"><span style="width:26px;height:26px"></span></button>
+      <button type="button" class="tool eraser" data-action="draw-eraser" data-i18n="🧽 Rubber">🧽 Rubber</button>
+      <button type="button" class="tool" data-action="draw-undo" data-i18n="↶ Undo">↶ Undo</button>
+      <button type="button" class="tool" data-action="draw-clear" data-i18n="Start again">Start again</button>
+    </div>
+    <div class="stamps" role="radiogroup" aria-label="Stamps" data-i18n-attr="aria-label:Stamps"></div>
+  </div>
+  <div class="canvas-wrap"><canvas class="draw-canvas"></canvas></div>
+  <div class="mask-words" hidden>
+    <label class="sr-only" for="mask-say" data-i18n="What should be there instead?">What should be there instead?</label>
+    <textarea id="mask-say" rows="2" maxlength="300"
+      placeholder="what should be there instead? e.g. a red party hat"
+      data-i18n-attr="placeholder:what should be there instead? e.g. a red party hat"></textarea>
+  </div>
+  <p class="draw-note" data-i18n="Draw with your finger or a pencil. When you're done, tap <strong>Use my drawing</strong>.">Draw with your finger or a pencil. When you're done, tap <strong>Use my drawing</strong>.</p>
+</div>
+
+<!-- What is being made, in full. Opened by tapping the bar under the banner,
+     which is only there while something is happening, so nothing here has an
+     empty state to worry about. -->
+<div class="sheet nowsheet" id="nowsheet" hidden role="dialog" aria-modal="true"
+  aria-labelledby="nowsheet-title">
+  <div class="sheet-bar">
+    <h2 id="nowsheet-title" data-i18n="⏳ What’s happening?">&#9203; What&rsquo;s happening?</h2>
+    <div class="bar-actions">
+      <button class="sheet-back" type="button" data-action="close-nowsheet"
+        data-i18n="← Back">&larr; Back</button>
+    </div>
+  </div>
+
+  <p class="now-making" id="now-making"></p>
+  <p class="now-idea" id="now-idea" hidden></p>
+  <ul class="now-facts" id="now-facts"></ul>
+
+  <div class="bar now-bar" id="now-progress"><div class="fill" id="now-fill"></div><span class="pct" id="now-pct"></span></div>
+  <p class="now-step" id="now-step"></p>
+  <p class="now-times" id="now-times" hidden></p>
+  <p class="now-queue" id="now-queue" hidden></p>
+  <p class="sys now-sys" id="now-sys" hidden></p>
+
+  <div class="now-buttons">
+    <button type="button" class="now-show" id="now-show" hidden
+      data-i18n="Show me">Show me</button>
+    <button type="button" class="stop now-stop" id="now-stop" hidden
+      data-i18n="Stop">Stop</button>
+  </div>
+</div>
+
+<script src="i18n.js?v=2026-09-17m"></script>
+<script src="app.js?v=2026-09-17m"></script>
+</body>
+</html>

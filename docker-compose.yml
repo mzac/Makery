@@ -1,0 +1,70 @@
+# Everything configurable lives in .env - copy .env.example to .env first.
+# Nothing in this file is specific to one machine or one child.
+#
+#   cp .env.example .env && $EDITOR .env && docker compose up -d --build
+
+services:
+  makery:
+    build: .
+    container_name: ${CONTAINER_NAME:-makery}
+    restart: unless-stopped
+
+    # Not for rendering - ComfyUI does that - but NVML needs the driver
+    # libraries in the container to read GPU % and VRAM for the progress bar.
+    # Drop this whole block if the host has no NVIDIA GPU: the numbers simply
+    # go missing from the page and everything else works.
+    gpus: all
+
+    ports:
+      - "${HOST_PORT:-8095}:8000"
+
+    # Has to be able to delete from GALLERY_DIR, which ComfyUI owns. Usually a
+    # uid in the group that owns that directory. See "File ownership" in the
+    # README before changing it.
+    user: "${RUN_AS:-1000:1000}"
+
+    volumes:
+      # ComfyUI's output directory for this app: read directly as the gallery,
+      # nothing copied, no second source of truth.
+      - ${GALLERY_DIR:?set GALLERY_DIR in .env - see .env.example}:/gallery
+      # ComfyUI's input dir, so the janitor can sweep the frames "Animate this"
+      # leaves there. Only files this app put there are touched -
+      # `makery-*`, and `easy-iv-gen-*` from before the rename.
+      - ${COMFY_INPUT_DIR_HOST:-/dev/null}:/comfy-input
+      # Everything the app decides rather than makes: settings, their characters,
+      # the chat transcript, the prompt overrides, the timings, their banner.
+      # A named volume by default, so it is not in ComfyUI's output directory -
+      # which is shared, and is the thing people wipe when a disk fills up.
+      # Point STATE_VOLUME at a host path instead if you would rather see it -
+      # but create it and chown it to RUN_AS first, or Docker makes it
+      # root-owned and the app can write nothing. See .env.example.
+      - ${STATE_VOLUME:-makery-state}:/state
+
+    # Every app setting comes from .env. `required: false` so `docker compose
+    # config` still parses before you have written one - the app then falls
+    # back to its own defaults and tells you what is missing.
+    env_file:
+      - path: .env
+        required: false
+
+    environment:
+      # Fixed because they are paths *inside* the container; the host side of
+      # all three is in .env above.
+      GALLERY_DIR: /gallery
+      COMFY_INPUT_DIR: /comfy-input
+      STATE_DIR: /state
+
+    networks:
+      - shared
+
+volumes:
+  # Only created when STATE_VOLUME is left at its default. A host path there
+  # makes this declaration unused, which compose is happy with.
+  makery-state:
+
+networks:
+  shared:
+    # The network ComfyUI and Ollama are already on - this file joins it, it
+    # does not own it. `docker network ls` to find the name.
+    external: true
+    name: ${NETWORK_NAME:?set NETWORK_NAME in .env - the network ComfyUI is on}

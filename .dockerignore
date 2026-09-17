@@ -1,0 +1,8 @@
+.git
+.gitignore
+CLAUDE.md
+README.md
+**/__pycache__
+**/*.pyc
+**/._*
+**/.DS_Store

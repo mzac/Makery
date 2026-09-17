@@ -1,0 +1,12 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+httpx==0.28.1
+websockets==14.1
+pydantic==2.10.4
+pillow==11.1.0
+pillow-heif==0.21.0
+python-multipart==0.0.20
+av==18.1.0
+numpy==2.2.1          # mixing their voice with the video's own sound
+nvidia-ml-py==13.610.43
+apprise==1.13.1        # telegram / whatsapp / signal / ntfy / ~150 more, one URL each
