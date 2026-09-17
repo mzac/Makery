@@ -1,0 +1,123 @@
+# The checks CLAUDE.md says to run before every rebuild, run on every push
+# instead. None of them needs a GPU, ComfyUI or Ollama.
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'          # the version the Dockerfile builds on
+          cache: pip
+
+      - name: Install the dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compile every module
+        run: python -m compileall -q app
+
+      # Importing is worth more than compiling: it runs every module-level
+      # table in the app - the blocklist, the style phrases, the twelve
+      # synthesised sound effects - and a malformed one fails here rather
+      # than at a child's first tap.
+      - name: Import the app
+        run: |
+          python - <<'PY'
+          from app import (audit, backup, branding, characters, chat, comic,
+                           config, digest, i18n, jobs, lockdown, modules,
+                           music, naming, notify, pinbox, profiles, prompts,
+                           quiz, restyles, safety, schedule, scripts, sounds,
+                           stats, store, styles, telegram, themes, timings,
+                           uploads, workflows)
+          print("every module imports")
+          PY
+
+      # The graphs are data the app patches at runtime. A re-export that
+      # renumbers a node is the failure this catches, and it is otherwise
+      # only found by a render coming back wrong.
+      - name: Load every ComfyUI graph
+        run: |
+          python - <<'PY'
+          from app import workflows
+          for name in workflows.ALL_FILES:
+              workflows._load(name)
+          print(len(workflows.ALL_FILES), "graphs load")
+          print(len(workflows.wanted_models()), "model files wanted")
+          PY
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      # A syntax error in app.js is the whole child-facing page.
+      - name: Syntax-check the scripts
+        run: |
+          node --check static/app.js
+          node --check static/i18n.js
+          node --check static/parent.js
+          echo "all three scripts parse"
+
+      - name: Check the markup is balanced
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input",
+                  "link", "meta", "source", "track", "wbr"}
+
+          class Balance(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.stack, self.bad = [], []
+
+              def handle_starttag(self, tag, attrs):
+                  if tag not in VOID:
+                      self.stack.append((tag, self.getpos()[0]))
+
+              def handle_endtag(self, tag):
+                  if tag in VOID:
+                      return
+                  if not self.stack:
+                      self.bad.append(f"stray </{tag}> at line {self.getpos()[0]}")
+                  elif self.stack[-1][0] != tag:
+                      open_tag, line = self.stack[-1]
+                      self.bad.append(f"</{tag}> at line {self.getpos()[0]} "
+                                      f"closes <{open_tag}> opened at line {line}")
+                      self.stack.pop()
+                  else:
+                      self.stack.pop()
+
+          failed = False
+          for page in ("static/index.html", "static/parent.html"):
+              checker = Balance()
+              checker.feed(open(page, encoding="utf-8").read())
+              problems = checker.bad + [f"<{t}> at line {n} is never closed"
+                                        for t, n in checker.stack]
+              if problems:
+                  failed = True
+                  print(f"{page}:")
+                  for problem in problems:
+                      print("  " + problem)
+              else:
+                  print(f"{page}: balanced")
+          raise SystemExit(1 if failed else 0)
+          PY

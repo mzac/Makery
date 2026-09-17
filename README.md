@@ -1,5 +1,8 @@
 # Makery
 
+[![Checks](https://github.com/mzac/Makery/actions/workflows/checks.yml/badge.svg)](https://github.com/mzac/Makery/actions/workflows/checks.yml)
+[![Licence](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
+
 A front-end for ComfyUI built for a child, not for an operator. No model
 pickers, no samplers, no seeds: a box to type in, a big button, and a gallery
 of everything they have made. It runs beside a ComfyUI and an Ollama you
@@ -569,6 +572,9 @@ on purpose for a shared iPad.
 A refusal can optionally close the whole app until a parent reopens it, with
 the grown-ups told immediately either way. That is off by default and set
 under **Rules → If the filter says no**.
+
+[SECURITY.md](SECURITY.md) says which of these are deliberate and which would
+be a bug worth reporting, and how to report one privately.
 
 ## Where settings live
 
