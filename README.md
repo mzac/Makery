@@ -283,24 +283,13 @@ docker compose up -d
 docker compose logs makery | grep -iE "model|warn"
 ```
 
-**Pin a version once there is one to pin.** `latest` moves with every push to
-`main`, so a pull on a Tuesday morning can hand a child a different app from
-the one they used on Monday. Each release publishes a `1.2.3`, a `1.2` and a
-`1` tag, and every build also gets a `sha-<short>` one. Putting a release
-number in place of `latest` means an update happens when you choose it rather
-than when somebody else pushes. Check the
-[releases page](https://github.com/mzac/Makery/releases) for the newest.
-
-**The package is private until somebody makes it public.** GitHub publishes a
-new package privately, so until its visibility is changed an anonymous
-`docker pull ghcr.io/mzac/makery:latest` fails with `401 Unauthorized`. If the
-repository is yours, change it on GitHub under the package's own settings
-(Packages, then makery, then Package settings, then Change visibility). Until
-then, sign in with a personal access token carrying the `read:packages` scope:
-
-```bash
-echo <token> | docker login ghcr.io -u <github-username> --password-stdin
-```
+**Pin a version rather than following `latest`.** `latest` moves with every
+push to `main`, so a pull on a Tuesday morning can hand a child a different app
+from the one they used on Monday. Each release is dated and publishes three
+tags, `2026.9.17`, `2026.9` and `2026`, and every build also gets a
+`sha-<short>` one. Naming a release in place of `latest` means an update
+happens when you choose it rather than when somebody else pushes. The
+[releases page](https://github.com/mzac/Makery/releases) has the newest.
 
 **Building it yourself** needs the whole repository, whose `docker-compose.yml`
 already says `build: .` where the snippet above says `image:`:
