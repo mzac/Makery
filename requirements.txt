@@ -3,7 +3,7 @@ uvicorn[standard]==0.34.0
 httpx==0.28.1
 websockets==14.1
 pydantic==2.10.4
-pillow==11.1.0
+pillow==12.3.0
 pillow-heif==0.21.0
 python-multipart==0.0.20
 av==18.1.0
